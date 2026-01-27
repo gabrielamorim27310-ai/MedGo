@@ -1,0 +1,397 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  NURSE
+  HOSPITAL_ADMIN
+  SYSTEM_ADMIN
+  HEALTH_INSURANCE_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum HospitalType {
+  PUBLIC
+  PRIVATE
+  MIXED
+}
+
+enum HospitalStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum QueuePriority {
+  EMERGENCY
+  URGENT
+  SEMI_URGENT
+  NORMAL
+  LOW
+}
+
+enum QueueStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AppointmentType {
+  IN_PERSON
+  TELEMEDICINE
+  EMERGENCY
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+enum NotificationType {
+  APPOINTMENT_REMINDER
+  QUEUE_UPDATE
+  APPOINTMENT_CONFIRMED
+  APPOINTMENT_CANCELLED
+  APPOINTMENT_RESCHEDULED
+  PRESCRIPTION_READY
+  TEST_RESULT_READY
+  SYSTEM_ALERT
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  READ
+}
+
+enum HealthInsuranceStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CoverageType {
+  BASIC
+  STANDARD
+  PREMIUM
+  FULL
+}
+
+model User {
+  id                 String     @id @default(uuid())
+  email              String     @unique
+  password           String
+  name               String
+  cpf                String     @unique
+  phone              String
+  role               UserRole
+  status             UserStatus @default(ACTIVE)
+  hospitalId         String?
+  healthInsuranceId  String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  hospital           Hospital?           @relation(fields: [hospitalId], references: [id])
+  healthInsurance    HealthInsurance?    @relation(fields: [healthInsuranceId], references: [id])
+  patient            Patient?
+  notifications      Notification[]
+
+  @@index([email])
+  @@index([cpf])
+  @@map("users")
+}
+
+model Patient {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  dateOfBirth          DateTime
+  bloodType            BloodType?
+  allergies            String[]
+  chronicConditions    String[]
+  emergencyContactName String
+  emergencyContactPhone String
+  emergencyContactRelationship String
+  healthInsuranceId    String?
+  healthInsuranceNumber String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  healthInsurance      HealthInsurance?  @relation(fields: [healthInsuranceId], references: [id])
+  queueEntries         QueueEntry[]
+  appointments         Appointment[]
+  dependents           Dependent[]
+
+  @@index([userId])
+  @@map("patients")
+}
+
+enum DependentRelationship {
+  SPOUSE
+  CHILD
+  PARENT
+  SIBLING
+  OTHER
+}
+
+model Dependent {
+  id                   String    @id @default(uuid())
+  patientId            String
+  name                 String
+  cpf                  String    @unique
+  dateOfBirth          DateTime
+  relationship         DependentRelationship
+  bloodType            BloodType?
+  allergies            String[]
+  chronicConditions    String[]
+  healthInsuranceNumber String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  patient              Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([cpf])
+  @@map("dependents")
+}
+
+model Hospital {
+  id                    String          @id @default(uuid())
+  name                  String
+  cnpj                  String          @unique
+  type                  HospitalType
+  status                HospitalStatus  @default(ACTIVE)
+
+  // Address
+  street                String
+  number                String
+  complement            String?
+  neighborhood          String
+  city                  String
+  state                 String
+  zipCode               String
+  latitude              Float?
+  longitude             Float?
+
+  // Contact
+  phone                 String
+  email                 String
+  website               String?
+
+  specialties           String[]
+
+  // Capacity
+  totalBeds             Int
+  emergencyBeds         Int
+  icuBeds               Int
+
+  // Current Occupancy
+  occupiedBeds          Int             @default(0)
+  occupiedEmergencyBeds Int             @default(0)
+  occupiedIcuBeds       Int             @default(0)
+
+  acceptedHealthInsurances String[]
+
+  // Operating Hours
+  emergency24h          Boolean
+  operatingHours        Json?
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  users                 User[]
+  queueEntries          QueueEntry[]
+  appointments          Appointment[]
+
+  @@index([cnpj])
+  @@index([city, state])
+  @@map("hospitals")
+}
+
+model QueueEntry {
+  id                 String         @id @default(uuid())
+  hospitalId         String
+  patientId          String
+  priority           QueuePriority
+  status             QueueStatus    @default(WAITING)
+  specialty          String
+  symptoms           String
+  estimatedWaitTime  Int?
+  position           Int?
+  checkInTime        DateTime       @default(now())
+  startTime          DateTime?
+  endTime            DateTime?
+  doctorId           String?
+  roomNumber         String?
+  notes              String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  hospital           Hospital       @relation(fields: [hospitalId], references: [id])
+  patient            Patient        @relation(fields: [patientId], references: [id])
+
+  @@index([hospitalId, status])
+  @@index([patientId])
+  @@index([checkInTime])
+  @@map("queue_entries")
+}
+
+model Appointment {
+  id              String              @id @default(uuid())
+  hospitalId      String
+  patientId       String
+  doctorId        String
+  type            AppointmentType
+  status          AppointmentStatus   @default(SCHEDULED)
+  specialty       String
+  scheduledDate   DateTime
+  duration        Int
+  roomNumber      String?
+  telemedicineLink String?
+  reason          String
+  diagnosis       String?
+  prescription    String?
+  notes           String?
+  queueEntryId    String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  hospital        Hospital            @relation(fields: [hospitalId], references: [id])
+  patient         Patient             @relation(fields: [patientId], references: [id])
+
+  @@index([hospitalId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([scheduledDate])
+  @@map("appointments")
+}
+
+model HealthInsurance {
+  id                String                   @id @default(uuid())
+  name              String
+  cnpj              String                   @unique
+  status            HealthInsuranceStatus    @default(ACTIVE)
+
+  // Contact
+  phone             String
+  email             String
+  website           String?
+
+  // Address
+  street            String
+  number            String
+  complement        String?
+  neighborhood      String
+  city              String
+  state             String
+  zipCode           String
+
+  partnerHospitals  String[]
+
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  users             User[]
+  patients          Patient[]
+  plans             HealthInsurancePlan[]
+
+  @@index([cnpj])
+  @@map("health_insurances")
+}
+
+model HealthInsurancePlan {
+  id                    String                   @id @default(uuid())
+  healthInsuranceId     String
+  name                  String
+  code                  String                   @unique
+  coverageType          CoverageType
+
+  // Coverage Details
+  coverageEmergencyRoom Boolean
+  coverageHospitalization Boolean
+  coverageSurgery       Boolean
+  coverageExams         Boolean
+  coverageTelemedicine  Boolean
+  coverageSpecialties   String[]
+
+  monthlyPrice          Float
+
+  // Co-payment
+  coPaymentConsultation Float
+  coPaymentExam         Float
+  coPaymentEmergency    Float
+
+  status                HealthInsuranceStatus    @default(ACTIVE)
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  healthInsurance       HealthInsurance          @relation(fields: [healthInsuranceId], references: [id])
+
+  @@index([healthInsuranceId])
+  @@index([code])
+  @@map("health_insurance_plans")
+}
+
+model Notification {
+  id            String              @id @default(uuid())
+  userId        String
+  type          NotificationType
+  channel       NotificationChannel
+  status        NotificationStatus  @default(PENDING)
+  title         String
+  message       String
+  data          Json?
+  scheduledFor  DateTime?
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  readAt        DateTime?
+  error         String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  user          User                @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("notifications")
+}

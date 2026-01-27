@@ -1,0 +1,61 @@
+{
+  "name": "medgo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MedGo - Conectando pacientes, hospitais e planos de saúde",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seu-usuario/medgo"
+  },
+  "keywords": [
+    "healthcare",
+    "hospital",
+    "queue-management",
+    "telemedicine",
+    "health-insurance"
+  ],
+  "author": "MedGo Team",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:api": "turbo run dev --filter=api-gateway",
+    "dev:web": "turbo run dev --filter=web-dashboard",
+    "dev:analytics": "turbo run dev --filter=analytics-service",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:api": "turbo run test --filter=api-gateway",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "prepare": "husky install",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "db:migrate": "pnpm --filter api-gateway prisma migrate dev",
+    "db:studio": "pnpm --filter api-gateway prisma studio",
+    "db:seed": "pnpm --filter api-gateway prisma db seed",
+    "setup": "pnpm install && pnpm build --filter @medgo/shared-types && pnpm db:migrate"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "eslint": "^8.56.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.4",
+    "turbo": "^1.12.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "dependencies": {
+    "pg": "^8.17.2"
+  }
+}

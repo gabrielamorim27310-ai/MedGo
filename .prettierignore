@@ -1,0 +1,44 @@
+# Build outputs
+dist
+build
+.next
+out
+coverage
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode
+.idea
+
+# Terraform
+.terraform
+*.tfstate
+*.tfstate.*
+
+# Flutter
+.dart_tool
+.flutter-plugins
+.flutter-plugins-dependencies
+*.g.dart
+*.freezed.dart
+
+# Misc
+*.lock
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
