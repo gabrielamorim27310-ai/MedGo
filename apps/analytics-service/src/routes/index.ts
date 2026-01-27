@@ -1,8 +1,8 @@
-import { Router } from 'express'
+import { Router, type Router as RouterType } from 'express'
 import { AnalyticsController } from '../controllers/AnalyticsController'
 import { ReportController } from '../controllers/ReportController'
 
-const router = Router()
+const router: RouterType = Router()
 const analyticsController = new AnalyticsController()
 const reportController = new ReportController()
 

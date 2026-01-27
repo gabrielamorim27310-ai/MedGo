@@ -1,7 +1,7 @@
-import { Router } from 'express'
+import { Router, type Router as RouterType } from 'express'
 import { queueManager } from '../server'
 
-const router = Router()
+const router: RouterType = Router()
 
 router.get('/stats/:hospitalId', async (req, res, next) => {
   try {

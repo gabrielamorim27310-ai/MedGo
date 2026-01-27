@@ -43,6 +43,7 @@ export class QueueManager {
         },
         hospital: {
           select: {
+            id: true,
             name: true,
           },
         },
@@ -84,6 +85,7 @@ export class QueueManager {
         },
         hospital: {
           select: {
+            id: true,
             name: true,
           },
         },
@@ -166,6 +168,7 @@ export class QueueManager {
         },
         hospital: {
           select: {
+            id: true,
             name: true,
           },
         },

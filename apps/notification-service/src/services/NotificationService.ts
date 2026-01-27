@@ -90,11 +90,11 @@ export class NotificationService {
     await this.emailService.send(notification, notification.user.email)
   }
 
-  private async sendSMS(notification: any): Promise<void> {
+  private async sendSMS(_notification: any): Promise<void> {
     console.log('SMS sending not implemented yet')
   }
 
-  private async sendPush(notification: any): Promise<void> {
+  private async sendPush(_notification: any): Promise<void> {
     console.log('Push notification sending not implemented yet')
   }
 
