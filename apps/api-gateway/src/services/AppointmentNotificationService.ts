@@ -1,4 +1,4 @@
-import { Appointment, NotificationType, NotificationChannel } from '@medgo/shared-types'
+import { NotificationType, NotificationChannel } from '@medgo/shared-types'
 import axios from 'axios'
 
 const NOTIFICATION_SERVICE_URL =
@@ -26,7 +26,7 @@ export class AppointmentNotificationService {
     }
   }
 
-  async notifyAppointmentCreated(appointment: Appointment) {
+  async notifyAppointmentCreated(appointment: any) {
     const scheduledDate = new Date(appointment.scheduledDate).toLocaleString('pt-BR')
 
     await this.sendNotification(
@@ -43,7 +43,7 @@ export class AppointmentNotificationService {
     )
   }
 
-  async notifyAppointmentConfirmed(appointment: Appointment) {
+  async notifyAppointmentConfirmed(appointment: any) {
     const scheduledDate = new Date(appointment.scheduledDate).toLocaleString('pt-BR')
 
     await this.sendNotification(
@@ -60,7 +60,7 @@ export class AppointmentNotificationService {
     )
   }
 
-  async notifyAppointmentCancelled(appointment: Appointment) {
+  async notifyAppointmentCancelled(appointment: any) {
     const scheduledDate = new Date(appointment.scheduledDate).toLocaleString('pt-BR')
 
     await this.sendNotification(
@@ -80,7 +80,7 @@ export class AppointmentNotificationService {
     )
   }
 
-  async notifyAppointmentRescheduled(appointment: Appointment) {
+  async notifyAppointmentRescheduled(appointment: any) {
     const scheduledDate = new Date(appointment.scheduledDate).toLocaleString('pt-BR')
 
     await this.sendNotification(
@@ -97,7 +97,7 @@ export class AppointmentNotificationService {
     )
   }
 
-  async sendAppointmentReminder(appointment: Appointment) {
+  async sendAppointmentReminder(appointment: any) {
     const scheduledDate = new Date(appointment.scheduledDate).toLocaleString('pt-BR')
     const timeUntil = this.getTimeUntilAppointment(appointment.scheduledDate)
 
@@ -132,7 +132,7 @@ export class AppointmentNotificationService {
     }
   }
 
-  async scheduleAppointmentReminders(appointment: Appointment) {
+  async scheduleAppointmentReminders(appointment: any) {
     const scheduledDate = new Date(appointment.scheduledDate)
     const now = new Date()
 
