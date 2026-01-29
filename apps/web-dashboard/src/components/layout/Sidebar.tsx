@@ -18,6 +18,7 @@ import {
   TrendingUp,
   CreditCard,
   MapPin,
+  Settings,
   X,
 } from 'lucide-react'
 
@@ -105,6 +106,11 @@ const menuItems: MenuItem[] = [
     title: 'Notificações',
     href: '/dashboard/notifications' as Route,
     icon: Bell,
+  },
+  {
+    title: 'Configurações',
+    href: '/dashboard/settings' as Route,
+    icon: Settings,
   },
 ]
 

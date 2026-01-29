@@ -12,6 +12,7 @@ router.get('/', authorize(UserRole.SYSTEM_ADMIN, UserRole.HOSPITAL_ADMIN), userC
 router.get('/me', userController.getProfile)
 router.get('/:id', userController.getById)
 router.put('/:id', userController.update)
+router.put('/:id/password', userController.changePassword)
 router.delete('/:id', authorize(UserRole.SYSTEM_ADMIN), userController.delete)
 
 export default router

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
+import bcrypt from 'bcrypt'
 import { AuthRequest } from '../middlewares/auth'
 import { AppError } from '../middlewares/errorHandler'
 import { prisma } from '../lib/prisma'
@@ -143,6 +144,41 @@ export class UserController {
       })
 
       res.json(user)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async changePassword(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params
+      const { currentPassword, newPassword } = req.body
+
+      if (!currentPassword || !newPassword) {
+        throw new AppError('Senha atual e nova senha são obrigatórias', 400)
+      }
+
+      if (newPassword.length < 6) {
+        throw new AppError('Nova senha deve ter no mínimo 6 caracteres', 400)
+      }
+
+      const user = await prisma.user.findUnique({ where: { id } })
+      if (!user) {
+        throw new AppError('Usuário não encontrado', 404)
+      }
+
+      const isValid = await bcrypt.compare(currentPassword, user.password)
+      if (!isValid) {
+        throw new AppError('Senha atual incorreta', 401)
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10)
+      await prisma.user.update({
+        where: { id },
+        data: { password: hashedPassword },
+      })
+
+      res.json({ message: 'Senha alterada com sucesso' })
     } catch (error) {
       next(error)
     }

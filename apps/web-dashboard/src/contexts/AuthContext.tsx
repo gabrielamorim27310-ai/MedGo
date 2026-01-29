@@ -10,6 +10,7 @@ interface AuthContextData {
   isLoading: boolean
   login: (credentials: LoginDTO) => Promise<void>
   logout: () => void
+  updateUser: (updatedUser: User) => void
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData)
@@ -53,6 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser)
+    localStorage.setItem('user', JSON.stringify(updatedUser))
+  }
+
   const logout = () => {
     localStorage.removeItem('user')
     localStorage.removeItem('token')
@@ -70,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}
