@@ -251,7 +251,7 @@ export default function DependentsPage() {
                   )}
 
                   <div className="flex gap-2 pt-2">
-                    <Link href={`/dashboard/dependents/${dependent.id}/edit`} className="flex-1">
+                    <Link href={`/dashboard/dependents/${dependent.id}/edit` as any} className="flex-1">
                       <Button variant="outline" size="sm" className="w-full">
                         <Pencil className="h-3 w-3 mr-1" />
                         Editar
