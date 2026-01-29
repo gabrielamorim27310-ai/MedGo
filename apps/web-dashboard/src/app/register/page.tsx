@@ -6,13 +6,25 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { CreateUserDTO, UserRole } from '@medgo/shared-types'
+import { UserRole } from '@medgo/shared-types'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, ArrowLeft } from 'lucide-react'
+
+const bloodTypes = [
+  { value: '', label: 'Selecione...' },
+  { value: 'A_POSITIVE', label: 'A+' },
+  { value: 'A_NEGATIVE', label: 'A-' },
+  { value: 'B_POSITIVE', label: 'B+' },
+  { value: 'B_NEGATIVE', label: 'B-' },
+  { value: 'AB_POSITIVE', label: 'AB+' },
+  { value: 'AB_NEGATIVE', label: 'AB-' },
+  { value: 'O_POSITIVE', label: 'O+' },
+  { value: 'O_NEGATIVE', label: 'O-' },
+]
 
 const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
@@ -22,9 +34,51 @@ const registerSchema = z.object({
   cpf: z.string().min(11, 'CPF deve ter 11 dígitos').max(14, 'CPF inválido'),
   phone: z.string().min(10, 'Telefone deve ter no mínimo 10 dígitos'),
   role: z.nativeEnum(UserRole),
+
+  // Patient fields
+  dateOfBirth: z.string().optional(),
+  bloodType: z.string().optional(),
+  allergies: z.string().optional(),
+  chronicConditions: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  emergencyContactRelationship: z.string().optional(),
+  healthInsuranceNumber: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Senhas não conferem',
   path: ['confirmPassword'],
+}).refine((data) => {
+  if (data.role === UserRole.PATIENT) {
+    return !!data.dateOfBirth
+  }
+  return true
+}, {
+  message: 'Data de nascimento é obrigatória',
+  path: ['dateOfBirth'],
+}).refine((data) => {
+  if (data.role === UserRole.PATIENT) {
+    return !!data.emergencyContactName && data.emergencyContactName.length >= 2
+  }
+  return true
+}, {
+  message: 'Nome do contato de emergência é obrigatório',
+  path: ['emergencyContactName'],
+}).refine((data) => {
+  if (data.role === UserRole.PATIENT) {
+    return !!data.emergencyContactPhone && data.emergencyContactPhone.length >= 10
+  }
+  return true
+}, {
+  message: 'Telefone do contato de emergência é obrigatório',
+  path: ['emergencyContactPhone'],
+}).refine((data) => {
+  if (data.role === UserRole.PATIENT) {
+    return !!data.emergencyContactRelationship && data.emergencyContactRelationship.length >= 2
+  }
+  return true
+}, {
+  message: 'Parentesco é obrigatório',
+  path: ['emergencyContactRelationship'],
 })
 
 type RegisterForm = z.infer<typeof registerSchema>
@@ -33,6 +87,7 @@ const roleLabels: Record<UserRole, string> = {
   [UserRole.PATIENT]: 'Paciente',
   [UserRole.DOCTOR]: 'Médico',
   [UserRole.NURSE]: 'Enfermeiro(a)',
+  [UserRole.RECEPTIONIST]: 'Recepcionista',
   [UserRole.HOSPITAL_ADMIN]: 'Administrador Hospitalar',
   [UserRole.SYSTEM_ADMIN]: 'Administrador do Sistema',
   [UserRole.HEALTH_INSURANCE_ADMIN]: 'Administrador de Plano de Saúde',
@@ -48,6 +103,7 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -56,12 +112,15 @@ export default function RegisterPage() {
     },
   })
 
+  const selectedRole = watch('role')
+  const isPatient = selectedRole === UserRole.PATIENT
+
   const onSubmit = async (data: RegisterForm) => {
     try {
       setError(null)
       setIsLoading(true)
 
-      const createUserData: CreateUserDTO = {
+      const payload: any = {
         name: data.name,
         email: data.email,
         password: data.password,
@@ -70,7 +129,19 @@ export default function RegisterPage() {
         role: data.role,
       }
 
-      await api.post('/auth/register', createUserData)
+      // Adicionar campos de paciente se for PATIENT
+      if (data.role === UserRole.PATIENT) {
+        payload.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth).toISOString() : undefined
+        payload.bloodType = data.bloodType || undefined
+        payload.allergies = data.allergies ? data.allergies.split(',').map((s: string) => s.trim()) : []
+        payload.chronicConditions = data.chronicConditions ? data.chronicConditions.split(',').map((s: string) => s.trim()) : []
+        payload.emergencyContactName = data.emergencyContactName
+        payload.emergencyContactPhone = data.emergencyContactPhone
+        payload.emergencyContactRelationship = data.emergencyContactRelationship
+        payload.healthInsuranceNumber = data.healthInsuranceNumber || undefined
+      }
+
+      await api.post('/auth/register', payload)
       setSuccess(true)
 
       setTimeout(() => {
@@ -102,10 +173,12 @@ export default function RegisterPage() {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`
   }
 
+  const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -124,94 +197,25 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <Card className="w-full max-w-md mx-4">
+      <Card className="w-full max-w-2xl mx-4">
         <CardHeader className="space-y-1 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
             <Activity className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">MedGo</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">MedGo</h1>
           </div>
-          <CardTitle className="text-2xl">Criar Conta</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">Criar Conta</CardTitle>
           <CardDescription>
             Preencha os dados abaixo para criar sua conta
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome Completo</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Seu nome completo"
-                {...register('name')}
-                disabled={isLoading}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                {...register('email')}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cpf">CPF</Label>
-                <Input
-                  id="cpf"
-                  type="text"
-                  placeholder="000.000.000-00"
-                  {...register('cpf')}
-                  onChange={(e) => {
-                    const formatted = formatCPF(e.target.value)
-                    e.target.value = formatted
-                    setValue('cpf', formatted)
-                  }}
-                  maxLength={14}
-                  disabled={isLoading}
-                />
-                {errors.cpf && (
-                  <p className="text-sm text-destructive">{errors.cpf.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  type="text"
-                  placeholder="(00) 00000-0000"
-                  {...register('phone')}
-                  onChange={(e) => {
-                    const formatted = formatPhone(e.target.value)
-                    e.target.value = formatted
-                    setValue('phone', formatted)
-                  }}
-                  maxLength={15}
-                  disabled={isLoading}
-                />
-                {errors.phone && (
-                  <p className="text-sm text-destructive">{errors.phone.message}</p>
-                )}
-              </div>
-            </div>
-
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Tipo de Usuário - primeiro para condicionar campos */}
             <div className="space-y-2">
               <Label htmlFor="role">Tipo de Usuário</Label>
               <select
                 id="role"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className={selectClass}
                 {...register('role')}
                 disabled={isLoading}
               >
@@ -226,33 +230,227 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                disabled={isLoading}
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
+            {/* Dados Pessoais */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Dados Pessoais</h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome Completo *</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Seu nome completo"
+                  {...register('name')}
+                  disabled={isLoading}
+                />
+                {errors.name && (
+                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  {...register('email')}
+                  disabled={isLoading}
+                />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF *</Label>
+                  <Input
+                    id="cpf"
+                    type="text"
+                    placeholder="000.000.000-00"
+                    {...register('cpf')}
+                    onChange={(e) => {
+                      const formatted = formatCPF(e.target.value)
+                      e.target.value = formatted
+                      setValue('cpf', formatted)
+                    }}
+                    maxLength={14}
+                    disabled={isLoading}
+                  />
+                  {errors.cpf && (
+                    <p className="text-sm text-destructive">{errors.cpf.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone *</Label>
+                  <Input
+                    id="phone"
+                    type="text"
+                    placeholder="(00) 00000-0000"
+                    {...register('phone')}
+                    onChange={(e) => {
+                      const formatted = formatPhone(e.target.value)
+                      e.target.value = formatted
+                      setValue('phone', formatted)
+                    }}
+                    maxLength={15}
+                    disabled={isLoading}
+                  />
+                  {errors.phone && (
+                    <p className="text-sm text-destructive">{errors.phone.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    {...register('password')}
+                    disabled={isLoading}
+                  />
+                  {errors.password && (
+                    <p className="text-sm text-destructive">{errors.password.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    {...register('confirmPassword')}
+                    disabled={isLoading}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                {...register('confirmPassword')}
-                disabled={isLoading}
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-              )}
-            </div>
+            {/* Campos de Paciente - só aparecem se role = PATIENT */}
+            {isPatient && (
+              <>
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Informações Médicas</h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dateOfBirth">Data de Nascimento *</Label>
+                      <Input
+                        id="dateOfBirth"
+                        type="date"
+                        {...register('dateOfBirth')}
+                        disabled={isLoading}
+                      />
+                      {errors.dateOfBirth && (
+                        <p className="text-sm text-destructive">{errors.dateOfBirth.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bloodType">Tipo Sanguíneo</Label>
+                      <select
+                        id="bloodType"
+                        className={selectClass}
+                        {...register('bloodType')}
+                        disabled={isLoading}
+                      >
+                        {bloodTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="healthInsuranceNumber">Número do Plano de Saúde</Label>
+                    <Input
+                      id="healthInsuranceNumber"
+                      {...register('healthInsuranceNumber')}
+                      placeholder="123456789"
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="allergies">Alergias</Label>
+                    <Input
+                      id="allergies"
+                      {...register('allergies')}
+                      placeholder="Penicilina, Dipirona, Látex"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">Separe por vírgulas</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="chronicConditions">Condições Crônicas</Label>
+                    <Input
+                      id="chronicConditions"
+                      {...register('chronicConditions')}
+                      placeholder="Diabetes, Hipertensão"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">Separe por vírgulas</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Contato de Emergência</h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContactName">Nome *</Label>
+                      <Input
+                        id="emergencyContactName"
+                        {...register('emergencyContactName')}
+                        placeholder="Maria da Silva"
+                        disabled={isLoading}
+                      />
+                      {errors.emergencyContactName && (
+                        <p className="text-sm text-destructive">{errors.emergencyContactName.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContactPhone">Telefone *</Label>
+                      <Input
+                        id="emergencyContactPhone"
+                        {...register('emergencyContactPhone')}
+                        placeholder="(00) 00000-0000"
+                        disabled={isLoading}
+                      />
+                      {errors.emergencyContactPhone && (
+                        <p className="text-sm text-destructive">{errors.emergencyContactPhone.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContactRelationship">Parentesco *</Label>
+                      <Input
+                        id="emergencyContactRelationship"
+                        {...register('emergencyContactRelationship')}
+                        placeholder="Mãe, Pai, Cônjuge..."
+                        disabled={isLoading}
+                      />
+                      {errors.emergencyContactRelationship && (
+                        <p className="text-sm text-destructive">{errors.emergencyContactRelationship.message}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             {error && (
               <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">

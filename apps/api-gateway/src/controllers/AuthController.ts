@@ -68,7 +68,17 @@ export class AuthController {
 
   async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = req.body as CreateUserDTO
+      const {
+        dateOfBirth,
+        bloodType,
+        allergies,
+        chronicConditions,
+        emergencyContactName,
+        emergencyContactPhone,
+        emergencyContactRelationship,
+        healthInsuranceNumber,
+        ...data
+      } = req.body
 
       const existingUser = await prisma.user.findUnique({
         where: { email: data.email },
@@ -94,6 +104,23 @@ export class AuthController {
           password: hashedPassword,
         } as any,
       })
+
+      // Se for paciente, criar registro de Patient
+      if (data.role === 'PATIENT' && dateOfBirth) {
+        await prisma.patient.create({
+          data: {
+            userId: user.id,
+            dateOfBirth: new Date(dateOfBirth),
+            bloodType: bloodType || null,
+            allergies: allergies || [],
+            chronicConditions: chronicConditions || [],
+            emergencyContactName: emergencyContactName || '',
+            emergencyContactPhone: emergencyContactPhone || '',
+            emergencyContactRelationship: emergencyContactRelationship || '',
+            healthInsuranceNumber: healthInsuranceNumber || null,
+          } as any,
+        })
+      }
 
       const secret = process.env.JWT_SECRET
       const refreshSecret = process.env.JWT_REFRESH_SECRET
