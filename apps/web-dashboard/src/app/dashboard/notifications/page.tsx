@@ -124,15 +124,15 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Notificações</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Notificações</h2>
           <p className="text-muted-foreground">
             Gerencie suas notificações e alertas
           </p>
         </div>
         {displayUnreadCount > 0 && (
-          <Button variant="outline" className="gap-2" onClick={markAllAsRead}>
+          <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={markAllAsRead}>
             <CheckCheck className="h-4 w-4" />
             Marcar todas como lidas
           </Button>

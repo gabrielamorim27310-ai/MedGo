@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -13,6 +13,7 @@ export default function DashboardLayout({
 }) {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -34,9 +35,9 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
-      <Header />
-      <main className="ml-64 mt-16 p-6">{children}</main>
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <main className="mt-16 p-4 lg:ml-64 lg:p-6">{children}</main>
     </div>
   )
 }

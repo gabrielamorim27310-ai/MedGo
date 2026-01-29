@@ -116,7 +116,7 @@ export default function NewQueueEntryPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Nova Entrada na Fila</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Nova Entrada na Fila</h2>
           <p className="text-muted-foreground">
             Adicione um paciente à fila de atendimento
           </p>

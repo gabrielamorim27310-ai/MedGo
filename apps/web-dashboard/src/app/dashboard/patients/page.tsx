@@ -31,14 +31,14 @@ export default function PatientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Pacientes</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Pacientes</h2>
           <p className="text-muted-foreground">
             Gerencie os pacientes cadastrados no sistema
           </p>
         </div>
-        <Button className="gap-2" onClick={() => window.location.href = '/dashboard/patients/new'}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => window.location.href = '/dashboard/patients/new'}>
           <Plus className="h-4 w-4" />
           Novo Paciente
         </Button>
@@ -105,9 +105,9 @@ export default function PatientsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Lista de Pacientes</CardTitle>
-            <form onSubmit={onSearch} className="flex w-full max-w-sm items-center space-x-2">
+            <form onSubmit={onSearch} className="flex w-full sm:max-w-sm items-center space-x-2">
               <div className="relative flex-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -142,6 +142,7 @@ export default function PatientsPage() {
             </div>
           ) : (
             <>
+              <div className="overflow-x-auto -mx-6 px-6">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -181,6 +182,7 @@ export default function PatientsPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
 
               {/* Pagination */}
               {pagination.pages > 1 && (

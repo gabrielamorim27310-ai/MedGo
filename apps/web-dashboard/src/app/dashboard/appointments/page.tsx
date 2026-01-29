@@ -126,21 +126,21 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Agendamentos</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Agendamentos</h2>
           <p className="text-muted-foreground">
             Gerencie os agendamentos de consultas
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           Novo Agendamento
         </Button>
       </div>
 
       {stats && (
-        <div className="grid gap-4 md:grid-cols-5">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total</CardTitle>
@@ -207,7 +207,7 @@ export default function AppointmentsPage() {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <div className="flex-1">
               <Input
                 placeholder="Buscar paciente..."
@@ -219,7 +219,7 @@ export default function AppointmentsPage() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value as AppointmentStatus)}
-              className="rounded-md border border-input bg-background px-3 py-2"
+              className="rounded-md border border-input bg-background px-3 py-2 w-full sm:w-auto"
             >
               <option value="">Todos os Status</option>
               {Object.values(AppointmentStatus).map((status) => (
@@ -228,7 +228,7 @@ export default function AppointmentsPage() {
                 </option>
               ))}
             </select>
-            <Button onClick={handleSearch} className="gap-2">
+            <Button onClick={handleSearch} className="gap-2 w-full sm:w-auto">
               <Search className="h-4 w-4" />
               Buscar
             </Button>
@@ -240,50 +240,48 @@ export default function AppointmentsPage() {
         {appointments.map((appointment) => (
           <Card key={appointment.id}>
             <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-3 flex-1">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold">
-                      {appointment.patient.name}
-                    </h3>
-                    <Badge className={statusColors[appointment.status]}>
-                      {statusLabels[appointment.status]}
-                    </Badge>
-                    <Badge variant="outline">{typeLabels[appointment.type]}</Badge>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Data e Hora</p>
-                      <p className="font-medium">
-                        {format(new Date(appointment.scheduledDate), "dd/MM/yyyy 'às' HH:mm", {
-                          locale: ptBR,
-                        })}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Hospital</p>
-                      <p className="font-medium">{appointment.hospital.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Médico</p>
-                      <p className="font-medium">{appointment.doctor.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Motivo</p>
-                      <p className="font-medium">{appointment.reason}</p>
-                    </div>
-                  </div>
-
-                  {appointment.notes && (
-                    <div className="text-sm">
-                      <p className="text-muted-foreground">Observações</p>
-                      <p className="text-sm">{appointment.notes}</p>
-                    </div>
-                  )}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold">
+                    {appointment.patient.name}
+                  </h3>
+                  <Badge className={statusColors[appointment.status]}>
+                    {statusLabels[appointment.status]}
+                  </Badge>
+                  <Badge variant="outline">{typeLabels[appointment.type]}</Badge>
                 </div>
 
-                <div className="flex gap-2 ml-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Data e Hora</p>
+                    <p className="font-medium">
+                      {format(new Date(appointment.scheduledDate), "dd/MM/yyyy 'às' HH:mm", {
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Hospital</p>
+                    <p className="font-medium">{appointment.hospital.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Médico</p>
+                    <p className="font-medium">{appointment.doctor.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Motivo</p>
+                    <p className="font-medium">{appointment.reason}</p>
+                  </div>
+                </div>
+
+                {appointment.notes && (
+                  <div className="text-sm">
+                    <p className="text-muted-foreground">Observações</p>
+                    <p className="text-sm">{appointment.notes}</p>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2 pt-1">
                   {appointment.status === AppointmentStatus.SCHEDULED && (
                     <Button
                       size="sm"

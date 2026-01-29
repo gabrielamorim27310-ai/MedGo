@@ -60,14 +60,14 @@ export default function HealthInsurancePage() {
   return (
     <RoleGuard allowedRoles={['SYSTEM_ADMIN', 'HEALTH_INSURANCE_ADMIN']}>
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Planos de Saúde</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Planos de Saúde</h2>
           <p className="text-muted-foreground">
             Gerencie as operadoras e planos de saúde
           </p>
         </div>
-        <Button className="gap-2" onClick={() => window.location.href = '/dashboard/health-insurance/new'}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => window.location.href = '/dashboard/health-insurance/new'}>
           <Plus className="h-4 w-4" />
           Nova Operadora
         </Button>

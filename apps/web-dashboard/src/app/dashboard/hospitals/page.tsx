@@ -67,20 +67,20 @@ export default function HospitalsPage() {
   return (
     <RoleGuard allowedRoles={['SYSTEM_ADMIN', 'HOSPITAL_ADMIN']}>
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Hospitais</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Hospitais</h2>
           <p className="text-muted-foreground">
             Gerencie os hospitais cadastrados no sistema
           </p>
         </div>
-        <Button className="gap-2" onClick={() => window.location.href = '/dashboard/hospitals/new'}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => window.location.href = '/dashboard/hospitals/new'}>
           <Plus className="h-4 w-4" />
           Novo Hospital
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Hospitais</CardTitle>

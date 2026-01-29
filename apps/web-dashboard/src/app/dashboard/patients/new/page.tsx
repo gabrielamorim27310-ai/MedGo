@@ -103,7 +103,7 @@ export default function NewPatientPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Novo Paciente</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Novo Paciente</h2>
           <p className="text-muted-foreground">
             Cadastre um novo paciente no sistema
           </p>

@@ -130,15 +130,15 @@ export default function DependentsPage() {
   return (
     <RoleGuard allowedRoles={['PATIENT']}>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Meus Dependentes</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Meus Dependentes</h2>
             <p className="text-muted-foreground">
               Gerencie os dependentes do seu plano de saude
             </p>
           </div>
           <Link href="/dashboard/dependents/new">
-            <Button className="gap-2">
+            <Button className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               Adicionar Dependente
             </Button>

@@ -14,11 +14,11 @@ import {
   Calendar,
   Shield,
   Bell,
-  Settings,
   BarChart3,
   TrendingUp,
   CreditCard,
   MapPin,
+  X,
 } from 'lucide-react'
 
 type UserRole = 'PATIENT' | 'DOCTOR' | 'NURSE' | 'HOSPITAL_ADMIN' | 'SYSTEM_ADMIN' | 'HEALTH_INSURANCE_ADMIN'
@@ -108,7 +108,12 @@ const menuItems: MenuItem[] = [
   },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  open?: boolean
+  onClose?: () => void
+}
+
+export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname()
   const { user } = useAuth()
 
@@ -116,43 +121,67 @@ export function Sidebar() {
 
   // Filtrar itens de menu baseado no role do usuário
   const filteredMenuItems = menuItems.filter((item) => {
-    // Se não tem roles definidas, todos podem ver
     if (!item.roles) return true
-    // Se o usuário não está logado, não mostra itens com restrição
     if (!userRole) return false
-    // Verifica se o role do usuário está na lista permitida
     return item.roles.includes(userRole)
   })
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card">
-      <div className="flex h-16 items-center gap-2 border-b px-6">
-        <Activity className="h-6 w-6 text-primary" />
-        <span className="text-xl font-bold">MedGo</span>
-      </div>
+    <>
+      {/* Overlay mobile */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={onClose}
+        />
+      )}
 
-      <nav className="space-y-1 p-4">
-        {filteredMenuItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 z-50 h-screen w-64 border-r bg-card transition-transform duration-300 ease-in-out',
+          'lg:translate-x-0 lg:z-40',
+          open ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <div className="flex h-16 items-center justify-between border-b px-6">
+          <div className="flex items-center gap-2">
+            <Activity className="h-6 w-6 text-primary" />
+            <span className="text-xl font-bold">MedGo</span>
+          </div>
+          {/* Botão fechar no mobile */}
+          <button
+            onClick={onClose}
+            className="lg:hidden rounded-md p-1 hover:bg-accent"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              {item.title}
-            </Link>
-          )
-        })}
-      </nav>
-    </aside>
+        <nav className="space-y-1 p-4 overflow-y-auto h-[calc(100vh-4rem)]">
+          {filteredMenuItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                {item.title}
+              </Link>
+            )
+          })}
+        </nav>
+      </aside>
+    </>
   )
 }
