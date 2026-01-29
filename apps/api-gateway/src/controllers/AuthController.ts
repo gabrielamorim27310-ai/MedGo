@@ -43,13 +43,13 @@ export class AuthController {
           role: user.role,
         },
         secret,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any }
       )
 
       const refreshToken = jwt.sign(
         { id: user.id },
         refreshSecret,
-        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
+        { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '30d') as any }
       )
 
       const { password: _, ...userWithoutPassword } = user
@@ -92,7 +92,7 @@ export class AuthController {
         data: {
           ...data,
           password: hashedPassword,
-        },
+        } as any,
       })
 
       const secret = process.env.JWT_SECRET
@@ -110,13 +110,13 @@ export class AuthController {
           role: user.role,
         },
         secret,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any }
       )
 
       const refreshToken = jwt.sign(
         { id: user.id },
         refreshSecret,
-        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
+        { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '30d') as any }
       )
 
       const { password: _, ...userWithoutPassword } = user
@@ -166,13 +166,13 @@ export class AuthController {
           role: user.role,
         },
         secret,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any }
       )
 
       const newRefreshToken = jwt.sign(
         { id: user.id },
         refreshSecret,
-        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
+        { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '30d') as any }
       )
 
       res.json({

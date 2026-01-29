@@ -7,6 +7,8 @@
     "declarationMap": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
+    "strict": false,
+    "noImplicitAny": false,
     "baseUrl": "./src",
     "paths": {
       "@/*": ["./*"]

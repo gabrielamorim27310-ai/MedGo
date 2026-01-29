@@ -11,7 +11,7 @@ import queueRoutes from './routes/queue.routes'
 
 dotenv.config()
 
-const app = express()
+const app: express.Express = express()
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {
@@ -36,7 +36,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'queue-service', timestamp: new Date() })
 })
 

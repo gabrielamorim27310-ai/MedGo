@@ -35,13 +35,14 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
   }
 }
 
-export function authorize(...roles: UserRole[]) {
+export function authorize(...args: (UserRole | UserRole[])[]) {
+  const roleArray = args.flat() as UserRole[];
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       throw new AppError('User not authenticated', 401)
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!roleArray.includes(req.user.role)) {
       throw new AppError('Insufficient permissions', 403)
     }
 

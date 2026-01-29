@@ -23,17 +23,10 @@ export class AppointmentController {
         data: {
           ...data,
           status: AppointmentStatus.SCHEDULED,
-        },
+        } as any,
         include: {
           patient: true,
           hospital: true,
-          doctor: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
         },
       })
 
@@ -126,7 +119,7 @@ export class AppointmentController {
     }
   }
 
-  async findOne(req: Request, res: Response) {
+  async findOne(req: Request, res: Response): Promise<any> {
     try {
       const { id } = req.params
 
@@ -368,7 +361,7 @@ export class AppointmentController {
     }
   }
 
-  async getAvailableSlots(req: Request, res: Response) {
+  async getAvailableSlots(req: Request, res: Response): Promise<any> {
     try {
       const { hospitalId, doctorId, date, specialtyId } = req.query
 

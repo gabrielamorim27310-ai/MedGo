@@ -9,7 +9,7 @@ import routes from './routes'
 
 dotenv.config()
 
-const app = express()
+const app: express.Express = express()
 const PORT = process.env.PORT || 3001
 
 // Middlewares
@@ -23,7 +23,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'api-gateway', timestamp: new Date() })
 })
 

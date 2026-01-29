@@ -8,7 +8,7 @@ import notificationRoutes from './routes/notification.routes'
 
 dotenv.config()
 
-const app = express()
+const app: express.Express = express()
 const PORT = process.env.PORT || 3003
 
 // Initialize Notification Worker
@@ -26,7 +26,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'notification-service', timestamp: new Date() })
 })
 

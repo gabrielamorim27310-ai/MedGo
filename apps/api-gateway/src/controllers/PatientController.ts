@@ -88,7 +88,7 @@ export class PatientController {
       const data = req.body as CreatePatientDTO
 
       const patient = await prisma.patient.create({
-        data,
+        data: data as any,
         include: {
           user: {
             select: {
@@ -115,7 +115,7 @@ export class PatientController {
 
       const patient = await prisma.patient.update({
         where: { id },
-        data,
+        data: data as any,
         include: {
           user: {
             select: {
