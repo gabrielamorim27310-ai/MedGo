@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm --filter @medgo/shared-types build && pnpm --filter @medgo/web-dashboard build",
+  "outputDirectory": "apps/web-dashboard/.next",
+  "framework": "nextjs",
+  "installCommand": "pnpm install"
+}
