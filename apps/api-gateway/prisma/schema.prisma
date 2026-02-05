@@ -327,6 +327,16 @@ model HealthInsurance {
 
   partnerHospitals  String[]
 
+  // OAuth Integration
+  oauthEnabled      Boolean                  @default(false)
+  oauthClientId     String?
+  oauthClientSecret String?
+  oauthAuthUrl      String?
+  oauthTokenUrl     String?
+  oauthUserInfoUrl  String?
+  oauthScope        String?
+  oauthRedirectUri  String?
+
   createdAt         DateTime                 @default(now())
   updatedAt         DateTime                 @updatedAt
 

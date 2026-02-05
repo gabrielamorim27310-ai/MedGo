@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Shield } from 'lucide-react'
 import { api } from '@/lib/api'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 
@@ -27,6 +27,15 @@ const healthInsuranceSchema = z.object({
   city: z.string().min(2, 'Cidade e obrigatoria'),
   state: z.string().length(2, 'Estado deve ter 2 letras'),
   zipCode: z.string().length(8, 'CEP deve ter 8 digitos'),
+  // OAuth fields
+  oauthEnabled: z.boolean().optional(),
+  oauthClientId: z.string().optional(),
+  oauthClientSecret: z.string().optional(),
+  oauthAuthUrl: z.string().optional(),
+  oauthTokenUrl: z.string().optional(),
+  oauthUserInfoUrl: z.string().optional(),
+  oauthScope: z.string().optional(),
+  oauthRedirectUri: z.string().optional(),
 })
 
 type HealthInsuranceFormData = z.infer<typeof healthInsuranceSchema>
@@ -69,6 +78,14 @@ export default function EditHealthInsurancePage() {
           city: insurance.city,
           state: insurance.state,
           zipCode: insurance.zipCode,
+          oauthEnabled: insurance.oauthEnabled || false,
+          oauthClientId: insurance.oauthClientId || '',
+          oauthClientSecret: insurance.oauthClientSecret || '',
+          oauthAuthUrl: insurance.oauthAuthUrl || '',
+          oauthTokenUrl: insurance.oauthTokenUrl || '',
+          oauthUserInfoUrl: insurance.oauthUserInfoUrl || '',
+          oauthScope: insurance.oauthScope || '',
+          oauthRedirectUri: insurance.oauthRedirectUri || '',
         })
       } catch (err: any) {
         setError(err.response?.data?.message || 'Erro ao carregar operadora')
@@ -85,7 +102,10 @@ export default function EditHealthInsurancePage() {
     setError(null)
 
     try {
-      await api.put(`/health-insurances/${insuranceId}`, data)
+      await api.put(`/health-insurances/${insuranceId}`, {
+        ...data,
+        oauthEnabled: data.oauthEnabled || false,
+      })
       router.push('/dashboard/health-insurance')
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao atualizar operadora')
@@ -221,6 +241,75 @@ export default function EditHealthInsurancePage() {
                 <Label htmlFor="zipCode">CEP *</Label>
                 <Input id="zipCode" {...register('zipCode')} maxLength={8} />
                 {errors.zipCode && <p className="text-sm text-destructive">{errors.zipCode.message}</p>}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-muted-foreground" />
+                <CardTitle>Integracao OAuth</CardTitle>
+              </div>
+              <CardDescription>
+                Configure a integracao OAuth para permitir que pacientes importem seus dados automaticamente
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="oauthEnabled"
+                    {...register('oauthEnabled')}
+                    className="h-4 w-4 rounded border-input"
+                  />
+                  <Label htmlFor="oauthEnabled" className="font-normal">
+                    Habilitar integracao OAuth para sincronizacao de dados
+                  </Label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="oauthClientId">Client ID</Label>
+                <Input id="oauthClientId" {...register('oauthClientId')} placeholder="client_id_here" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="oauthClientSecret">Client Secret</Label>
+                <Input id="oauthClientSecret" type="password" {...register('oauthClientSecret')} placeholder="••••••••" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="oauthAuthUrl">URL de Autorizacao</Label>
+                <Input id="oauthAuthUrl" {...register('oauthAuthUrl')} placeholder="https://oauth.operadora.com/authorize" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="oauthTokenUrl">URL do Token</Label>
+                <Input id="oauthTokenUrl" {...register('oauthTokenUrl')} placeholder="https://oauth.operadora.com/token" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="oauthUserInfoUrl">URL de User Info</Label>
+                <Input id="oauthUserInfoUrl" {...register('oauthUserInfoUrl')} placeholder="https://api.operadora.com/userinfo" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="oauthScope">Escopos</Label>
+                <Input id="oauthScope" {...register('oauthScope')} placeholder="openid profile email" />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="oauthRedirectUri">URI de Callback</Label>
+                <Input
+                  id="oauthRedirectUri"
+                  {...register('oauthRedirectUri')}
+                  placeholder="https://medgo-frontend.vercel.app/oauth/callback"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Esta URL deve ser registrada como URI de callback no painel OAuth da operadora
+                </p>
               </div>
             </CardContent>
           </Card>

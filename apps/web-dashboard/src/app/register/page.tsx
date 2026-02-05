@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,7 +12,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Activity, ArrowLeft } from 'lucide-react'
+import { Activity, ArrowLeft, ExternalLink, Shield, Loader2 } from 'lucide-react'
+
+interface HealthInsurance {
+  id: string
+  name: string
+  website: string | null
+  oauthEnabled: boolean
+}
 
 const bloodTypes = [
   { value: '', label: 'Selecione...' },
@@ -44,6 +51,7 @@ const registerSchema = z.object({
   emergencyContactPhone: z.string().optional(),
   emergencyContactRelationship: z.string().optional(),
   healthInsuranceNumber: z.string().optional(),
+  healthInsuranceId: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Senhas não conferem',
   path: ['confirmPassword'],
@@ -95,9 +103,14 @@ const roleLabels: Record<UserRole, string> = {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [healthInsurances, setHealthInsurances] = useState<HealthInsurance[]>([])
+  const [loadingInsurances, setLoadingInsurances] = useState(true)
+  const [selectedInsurance, setSelectedInsurance] = useState<HealthInsurance | null>(null)
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null)
 
   const {
     register,
@@ -114,6 +127,76 @@ export default function RegisterPage() {
 
   const selectedRole = watch('role')
   const isPatient = selectedRole === UserRole.PATIENT
+
+  // Fetch health insurances on mount
+  useEffect(() => {
+    const fetchInsurances = async () => {
+      try {
+        const response = await api.get('/health-insurances/public')
+        setHealthInsurances(response.data.data || [])
+      } catch (err) {
+        console.error('Error fetching health insurances:', err)
+      } finally {
+        setLoadingInsurances(false)
+      }
+    }
+
+    fetchInsurances()
+  }, [])
+
+  // Handle OAuth callback data from URL params
+  useEffect(() => {
+    const oauthData = searchParams.get('oauth_data')
+    if (oauthData) {
+      try {
+        const data = JSON.parse(decodeURIComponent(oauthData))
+        if (data.userData) {
+          if (data.userData.name) setValue('name', data.userData.name)
+          if (data.userData.email) setValue('email', data.userData.email)
+          if (data.userData.cpf) setValue('cpf', formatCPF(data.userData.cpf))
+          if (data.userData.phone) setValue('phone', formatPhone(data.userData.phone))
+          if (data.userData.dateOfBirth) setValue('dateOfBirth', data.userData.dateOfBirth.split('T')[0])
+          if (data.userData.healthInsuranceNumber) setValue('healthInsuranceNumber', data.userData.healthInsuranceNumber)
+        }
+        if (data.healthInsuranceId) {
+          setValue('healthInsuranceId', data.healthInsuranceId)
+          const insurance = healthInsurances.find(h => h.id === data.healthInsuranceId)
+          if (insurance) setSelectedInsurance(insurance)
+        }
+        // Clean URL
+        window.history.replaceState({}, '', '/register')
+      } catch (err) {
+        console.error('Error parsing OAuth data:', err)
+      }
+    }
+  }, [searchParams, setValue, healthInsurances])
+
+  const handleHealthInsuranceOAuth = async (insurance: HealthInsurance) => {
+    setOauthLoading(insurance.id)
+    try {
+      const response = await api.get(`/health-insurances/${insurance.id}/oauth/initiate`)
+      const data = response.data
+
+      if (data.type === 'redirect' && data.url) {
+        // Simple redirect without OAuth - opens in new tab
+        window.open(data.url, '_blank')
+        setSelectedInsurance(insurance)
+        setValue('healthInsuranceId', insurance.id)
+      } else if (data.type === 'oauth' && data.authUrl) {
+        // OAuth flow - redirect in same window
+        // Store current form state before redirecting
+        localStorage.setItem('register_form_backup', JSON.stringify({
+          insurance: insurance,
+        }))
+        window.location.href = data.authUrl
+      }
+    } catch (err) {
+      console.error('Error initiating OAuth:', err)
+      setError('Erro ao conectar com o plano de saúde')
+    } finally {
+      setOauthLoading(null)
+    }
+  }
 
   const onSubmit = async (data: RegisterForm) => {
     try {
@@ -139,6 +222,7 @@ export default function RegisterPage() {
         payload.emergencyContactPhone = data.emergencyContactPhone
         payload.emergencyContactRelationship = data.emergencyContactRelationship
         payload.healthInsuranceNumber = data.healthInsuranceNumber || undefined
+        payload.healthInsuranceId = data.healthInsuranceId || undefined
       }
 
       await api.post('/auth/register', payload)
@@ -229,6 +313,69 @@ export default function RegisterPage() {
                 <p className="text-sm text-destructive">{errors.role.message}</p>
               )}
             </div>
+
+            {/* Health Insurance Selection - only for patients */}
+            {isPatient && healthInsurances.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Vincular Plano de Saúde</h3>
+                <p className="text-sm text-muted-foreground">
+                  Conecte com seu plano de saúde para importar seus dados automaticamente
+                </p>
+
+                {loadingInsurances ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {healthInsurances.map((insurance) => (
+                      <Button
+                        key={insurance.id}
+                        type="button"
+                        variant={selectedInsurance?.id === insurance.id ? "default" : "outline"}
+                        className="h-auto py-3 justify-start gap-3"
+                        onClick={() => handleHealthInsuranceOAuth(insurance)}
+                        disabled={oauthLoading !== null || isLoading}
+                      >
+                        {oauthLoading === insurance.id ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Shield className="h-5 w-5" />
+                        )}
+                        <div className="text-left">
+                          <div className="font-medium">{insurance.name}</div>
+                          <div className="text-xs opacity-70">
+                            {selectedInsurance?.id === insurance.id ? 'Vinculado' : 'Clique para vincular'}
+                          </div>
+                        </div>
+                        {insurance.oauthEnabled && <ExternalLink className="h-4 w-4 ml-auto" />}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+
+                {selectedInsurance && (
+                  <div className="p-3 rounded-md bg-green-50 text-green-700 text-sm flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Plano vinculado: {selectedInsurance.name}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto h-6 text-xs"
+                      onClick={() => {
+                        setSelectedInsurance(null)
+                        setValue('healthInsuranceId', '')
+                      }}
+                    >
+                      Remover
+                    </Button>
+                  </div>
+                )}
+
+                <input type="hidden" {...register('healthInsuranceId')} />
+              </div>
+            )}
 
             {/* Dados Pessoais */}
             <div className="space-y-4">

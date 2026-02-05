@@ -1,8 +1,200 @@
 import { Request, Response, NextFunction } from 'express'
 import { AppError } from '../middlewares/errorHandler'
 import { prisma } from '../lib/prisma'
+import crypto from 'crypto'
+
+// Armazenamento temporário de estados OAuth (em produção, usar Redis)
+const oauthStates = new Map<string, { healthInsuranceId: string; expiresAt: Date }>()
 
 export class HealthInsuranceController {
+  // Public endpoint for registration page - lists only OAuth-enabled insurances
+  async listPublic(req: Request, res: Response, next: NextFunction) {
+    try {
+      const healthInsurances = await prisma.healthInsurance.findMany({
+        where: {
+          status: 'ACTIVE',
+          oauthEnabled: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          website: true,
+          oauthEnabled: true,
+        },
+        orderBy: { name: 'asc' },
+      })
+
+      res.json({ data: healthInsurances })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  // Initiate OAuth flow - returns the authorization URL
+  async initiateOAuth(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params
+
+      const healthInsurance = await prisma.healthInsurance.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          oauthEnabled: true,
+          oauthClientId: true,
+          oauthAuthUrl: true,
+          oauthScope: true,
+          oauthRedirectUri: true,
+          website: true,
+        },
+      })
+
+      if (!healthInsurance) {
+        throw new AppError('Plano de saúde não encontrado', 404)
+      }
+
+      if (!healthInsurance.oauthEnabled || !healthInsurance.oauthAuthUrl) {
+        // Se não tem OAuth, retorna o website para redirect simples
+        if (healthInsurance.website) {
+          return res.json({
+            type: 'redirect',
+            url: healthInsurance.website,
+            healthInsurance: {
+              id: healthInsurance.id,
+              name: healthInsurance.name,
+            },
+          })
+        }
+        throw new AppError('Plano de saúde não possui integração OAuth configurada', 400)
+      }
+
+      // Gerar state para proteção CSRF
+      const state = crypto.randomBytes(32).toString('hex')
+      oauthStates.set(state, {
+        healthInsuranceId: healthInsurance.id,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutos
+      })
+
+      // Construir URL de autorização
+      const authUrl = new URL(healthInsurance.oauthAuthUrl)
+      authUrl.searchParams.set('client_id', healthInsurance.oauthClientId || '')
+      authUrl.searchParams.set('redirect_uri', healthInsurance.oauthRedirectUri || '')
+      authUrl.searchParams.set('response_type', 'code')
+      authUrl.searchParams.set('scope', healthInsurance.oauthScope || 'openid profile email')
+      authUrl.searchParams.set('state', state)
+
+      res.json({
+        type: 'oauth',
+        authUrl: authUrl.toString(),
+        state,
+        healthInsurance: {
+          id: healthInsurance.id,
+          name: healthInsurance.name,
+        },
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  // Handle OAuth callback
+  async handleOAuthCallback(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { code, state, error: oauthError } = req.query
+
+      if (oauthError) {
+        throw new AppError(`Erro OAuth: ${oauthError}`, 400)
+      }
+
+      if (!code || !state) {
+        throw new AppError('Código ou state não fornecido', 400)
+      }
+
+      const stateData = oauthStates.get(state as string)
+      if (!stateData) {
+        throw new AppError('State inválido ou expirado', 400)
+      }
+
+      if (new Date() > stateData.expiresAt) {
+        oauthStates.delete(state as string)
+        throw new AppError('State expirado', 400)
+      }
+
+      const healthInsurance = await prisma.healthInsurance.findUnique({
+        where: { id: stateData.healthInsuranceId },
+        select: {
+          id: true,
+          name: true,
+          oauthClientId: true,
+          oauthClientSecret: true,
+          oauthTokenUrl: true,
+          oauthUserInfoUrl: true,
+          oauthRedirectUri: true,
+        },
+      })
+
+      if (!healthInsurance || !healthInsurance.oauthTokenUrl) {
+        throw new AppError('Configuração OAuth inválida', 500)
+      }
+
+      // Trocar código por token
+      const tokenResponse = await fetch(healthInsurance.oauthTokenUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: healthInsurance.oauthClientId || '',
+          client_secret: healthInsurance.oauthClientSecret || '',
+          code: code as string,
+          redirect_uri: healthInsurance.oauthRedirectUri || '',
+        }),
+      })
+
+      if (!tokenResponse.ok) {
+        throw new AppError('Erro ao obter token do plano de saúde', 500)
+      }
+
+      const tokenData = await tokenResponse.json()
+
+      // Obter informações do usuário
+      let userInfo: any = {}
+      if (healthInsurance.oauthUserInfoUrl && tokenData.access_token) {
+        const userInfoResponse = await fetch(healthInsurance.oauthUserInfoUrl, {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+          },
+        })
+
+        if (userInfoResponse.ok) {
+          userInfo = await userInfoResponse.json()
+        }
+      }
+
+      // Limpar state usado
+      oauthStates.delete(state as string)
+
+      // Retornar dados do usuário para o frontend preencher o formulário
+      res.json({
+        success: true,
+        healthInsuranceId: healthInsurance.id,
+        healthInsuranceName: healthInsurance.name,
+        userData: {
+          name: userInfo.name || userInfo.given_name && userInfo.family_name
+            ? `${userInfo.given_name} ${userInfo.family_name}`
+            : null,
+          email: userInfo.email || null,
+          cpf: userInfo.cpf || userInfo.tax_id || null,
+          phone: userInfo.phone || userInfo.phone_number || null,
+          dateOfBirth: userInfo.birthdate || userInfo.date_of_birth || null,
+          healthInsuranceNumber: userInfo.member_id || userInfo.insurance_number || userInfo.subscriber_id || null,
+        },
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
   async list(req: Request, res: Response, next: NextFunction) {
     try {
       const { page = 1, limit = 10, search } = req.query

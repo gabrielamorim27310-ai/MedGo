@@ -94,6 +94,7 @@ export class AuthController {
         emergencyContactPhone,
         emergencyContactRelationship,
         healthInsuranceNumber,
+        healthInsuranceId,
         ...data
       } = req.body
 
@@ -119,6 +120,7 @@ export class AuthController {
         data: {
           ...data,
           password: hashedPassword,
+          healthInsuranceId: healthInsuranceId || null,
         } as any,
       })
 
@@ -135,6 +137,7 @@ export class AuthController {
             emergencyContactPhone: emergencyContactPhone || '',
             emergencyContactRelationship: emergencyContactRelationship || '',
             healthInsuranceNumber: healthInsuranceNumber || null,
+            healthInsuranceId: healthInsuranceId || null,
           } as any,
         })
       }
