@@ -4,11 +4,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { User, LoginDTO, AuthResponse } from '@medgo/shared-types'
 import { api } from '@/lib/api'
 
+interface LoginResult {
+  healthInsuranceWebsite?: string | null
+}
+
 interface AuthContextData {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (credentials: LoginDTO) => Promise<void>
+  login: (credentials: LoginDTO) => Promise<LoginResult>
   logout: () => void
   updateUser: (updatedUser: User) => void
 }
@@ -35,10 +39,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadStoredUser()
   }, [])
 
-  const login = async (credentials: LoginDTO) => {
+  const login = async (credentials: LoginDTO): Promise<LoginResult> => {
     try {
-      const response = await api.post<AuthResponse>('/auth/login', credentials)
-      const { user, token, refreshToken } = response.data
+      const response = await api.post<AuthResponse & { healthInsuranceWebsite?: string | null }>('/auth/login', credentials)
+      const { user, token, refreshToken, healthInsuranceWebsite } = response.data
 
       localStorage.setItem('user', JSON.stringify(user))
       localStorage.setItem('token', token)
@@ -48,6 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 days
 
       setUser(user)
+
+      return { healthInsuranceWebsite }
     } catch (error) {
       console.error('Login error:', error)
       throw error

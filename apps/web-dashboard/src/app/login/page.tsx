@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Activity } from 'lucide-react'
+import { Activity, ExternalLink } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -26,6 +26,7 @@ export default function LoginPage() {
   const { login } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [healthInsuranceUrl, setHealthInsuranceUrl] = useState<string | null>(null)
 
   const {
     register,
@@ -39,19 +40,75 @@ export default function LoginPage() {
     try {
       setError(null)
       setIsLoading(true)
-      await login(data as LoginDTO)
-      // Use window.location to force full page reload with new cookie
-      window.location.href = '/dashboard'
+      const result = await login(data as LoginDTO)
+
+      // Se paciente tem plano de saúde com site, mostrar opção de redirecionamento
+      if (result.healthInsuranceWebsite) {
+        setHealthInsuranceUrl(result.healthInsuranceWebsite)
+        setIsLoading(false)
+      } else {
+        // Use window.location to force full page reload with new cookie
+        window.location.href = '/dashboard'
+      }
     } catch (err) {
       setError('Email ou senha inválidos')
-    } finally {
       setIsLoading(false)
     }
   }
 
+  const goToDashboard = () => {
+    window.location.href = '/dashboard'
+  }
+
+  const goToHealthInsurance = () => {
+    if (healthInsuranceUrl) {
+      // Abre o site do plano em nova aba e vai para o dashboard
+      window.open(healthInsuranceUrl, '_blank')
+      window.location.href = '/dashboard'
+    }
+  }
+
+  // Tela de escolha após login de paciente com plano
+  if (healthInsuranceUrl) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <Card className="w-full max-w-md mx-4">
+          <CardHeader className="space-y-1 flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-2">
+              <Activity className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold">MedGo</h1>
+            </div>
+            <CardTitle className="text-2xl text-center">Login realizado!</CardTitle>
+            <CardDescription className="text-center">
+              Você possui um plano de saúde vinculado. Deseja acessar o portal do plano?
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button
+              onClick={goToHealthInsurance}
+              className="w-full gap-2"
+              size="lg"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Acessar Portal do Plano de Saúde
+            </Button>
+            <Button
+              onClick={goToDashboard}
+              variant="outline"
+              className="w-full"
+              size="lg"
+            >
+              Ir para o Dashboard MedGo
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md mx-4">
         <CardHeader className="space-y-1 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
             <Activity className="h-8 w-8 text-primary" />
@@ -122,3 +179,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

@@ -28,6 +28,22 @@ export class AuthController {
         throw new AppError('Email ou senha inválidos', 401)
       }
 
+      // Se for paciente, buscar informações do plano de saúde
+      let healthInsuranceWebsite: string | null = null
+      if (user.role === 'PATIENT') {
+        const patient = await prisma.patient.findUnique({
+          where: { userId: user.id },
+          include: {
+            healthInsurance: {
+              select: { website: true, name: true }
+            }
+          }
+        })
+        if (patient?.healthInsurance?.website) {
+          healthInsuranceWebsite = patient.healthInsurance.website
+        }
+      }
+
       const secret = process.env.JWT_SECRET
       const refreshSecret = process.env.JWT_REFRESH_SECRET
 
@@ -54,10 +70,11 @@ export class AuthController {
 
       const { password: _, ...userWithoutPassword } = user
 
-      const response: AuthResponse = {
+      const response: any = {
         user: userWithoutPassword as any,
         token,
         refreshToken,
+        healthInsuranceWebsite,
       }
 
       res.json(response)
