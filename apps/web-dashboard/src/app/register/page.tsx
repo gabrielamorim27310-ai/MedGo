@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -101,7 +101,7 @@ const roleLabels: Record<UserRole, string> = {
   [UserRole.HEALTH_INSURANCE_ADMIN]: 'Administrador de Plano de Saúde',
 }
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
@@ -622,5 +622,35 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+function RegisterLoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      <Card className="w-full max-w-2xl mx-4">
+        <CardHeader className="space-y-1 flex flex-col items-center">
+          <div className="flex items-center gap-2 mb-2">
+            <Activity className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-bold">MedGo</h1>
+          </div>
+          <CardTitle className="text-xl sm:text-2xl">Criar Conta</CardTitle>
+          <CardDescription>
+            Carregando...
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterLoadingFallback />}>
+      <RegisterPageContent />
+    </Suspense>
   )
 }
