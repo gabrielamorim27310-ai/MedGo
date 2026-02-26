@@ -8,17 +8,21 @@ import { UpdateUserDTO } from '@medgo/shared-types'
 export class UserController {
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const { page = 1, limit = 10, search } = req.query
+      const { page = 1, limit = 10, search, role } = req.query
 
-      const where = search
-        ? {
-            OR: [
-              { name: { contains: search as string, mode: 'insensitive' as const } },
-              { email: { contains: search as string, mode: 'insensitive' as const } },
-              { cpf: { contains: search as string } },
-            ],
-          }
-        : {}
+      const where: any = {}
+
+      if (search) {
+        where.OR = [
+          { name: { contains: search as string, mode: 'insensitive' as const } },
+          { email: { contains: search as string, mode: 'insensitive' as const } },
+          { cpf: { contains: search as string } },
+        ]
+      }
+
+      if (role) {
+        where.role = role as string
+      }
 
       const [users, total] = await Promise.all([
         prisma.user.findMany({

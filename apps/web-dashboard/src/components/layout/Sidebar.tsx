@@ -20,6 +20,7 @@ import {
   MapPin,
   Settings,
   X,
+  Stethoscope,
 } from 'lucide-react'
 
 type UserRole = 'PATIENT' | 'DOCTOR' | 'NURSE' | 'HOSPITAL_ADMIN' | 'SYSTEM_ADMIN' | 'HEALTH_INSURANCE_ADMIN'
@@ -57,6 +58,12 @@ const menuItems: MenuItem[] = [
     roles: ['SYSTEM_ADMIN', 'HOSPITAL_ADMIN', 'DOCTOR', 'NURSE', 'PATIENT'],
   },
   {
+    title: 'Usuários',
+    href: '/dashboard/users' as Route,
+    icon: Users,
+    roles: ['SYSTEM_ADMIN'],
+  },
+  {
     title: 'Pacientes',
     href: '/dashboard/patients' as Route,
     icon: Users,
@@ -74,6 +81,12 @@ const menuItems: MenuItem[] = [
     title: 'Hospitais',
     href: '/dashboard/hospitals' as Route,
     icon: Building2,
+    roles: ['SYSTEM_ADMIN', 'HOSPITAL_ADMIN'],
+  },
+  {
+    title: 'Médicos',
+    href: '/dashboard/doctors' as Route,
+    icon: Stethoscope,
     roles: ['SYSTEM_ADMIN', 'HOSPITAL_ADMIN'],
   },
   {

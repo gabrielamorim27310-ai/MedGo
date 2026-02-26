@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Shield, Search, Plus, Loader2, ChevronLeft, ChevronRight, Users, Pencil, Trash2 } from 'lucide-react'
+import { Shield, Search, Plus, Loader2, ChevronLeft, ChevronRight, Users, Pencil, Trash2, FileText } from 'lucide-react'
 import { useHealthInsurances } from '@/hooks/useHealthInsurances'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 import { api } from '@/lib/api'
@@ -193,6 +193,14 @@ export default function HealthInsurancePage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.location.href = `/dashboard/health-insurance/${insurance.id}/plans`}
+                          >
+                            <FileText className="h-3 w-3 mr-1" />
+                            Planos
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"

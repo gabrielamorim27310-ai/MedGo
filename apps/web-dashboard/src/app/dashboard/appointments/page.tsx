@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import Link from 'next/link'
 import {
   Calendar,
   Clock,
@@ -15,6 +16,7 @@ import {
   AlertCircle,
   CalendarCheck,
   UserCheck,
+  Video,
 } from 'lucide-react'
 import { useAppointments, type AppointmentWithRelations } from '@/hooks/useAppointments'
 import { AppointmentStatus, AppointmentType } from '@medgo/shared-types'
@@ -133,10 +135,12 @@ export default function AppointmentsPage() {
             Gerencie os agendamentos de consultas
           </p>
         </div>
-        <Button className="gap-2 w-full sm:w-auto">
-          <Plus className="h-4 w-4" />
-          Novo Agendamento
-        </Button>
+        <Link href={'/dashboard/appointments/new' as any}>
+          <Button className="gap-2 w-full sm:w-auto">
+            <Plus className="h-4 w-4" />
+            Novo Agendamento
+          </Button>
+        </Link>
       </div>
 
       {stats && (
@@ -273,6 +277,25 @@ export default function AppointmentsPage() {
                     <p className="font-medium">{appointment.reason}</p>
                   </div>
                 </div>
+
+                {appointment.type === AppointmentType.TELEMEDICINE && (
+                  <div className="text-sm">
+                    <p className="text-muted-foreground">Telemedicina</p>
+                    {appointment.telemedicineLink ? (
+                      <a
+                        href={appointment.telemedicineLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                      >
+                        <Video className="h-4 w-4" />
+                        Acessar Consulta Online
+                      </a>
+                    ) : (
+                      <p className="text-muted-foreground italic">Link ainda não disponível</p>
+                    )}
+                  </div>
+                )}
 
                 {appointment.notes && (
                   <div className="text-sm">
