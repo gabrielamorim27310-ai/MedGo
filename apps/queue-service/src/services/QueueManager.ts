@@ -1,68 +1,101 @@
 import { Server } from 'socket.io'
-import { QueueEntry, QueuePriority, QueueStatus } from '@medgo/shared-types'
+import { QueueEntry, QueuePriority, QueueStatus } from '@acolhe/shared-types'
 import { prisma } from '../lib/prisma'
 import { RedisCache } from './RedisCache'
+import { WaitTimeEstimator } from './WaitTimeEstimator'
+import { NotificationDispatcher } from './NotificationDispatcher'
+
+const TICKET_PREFIX: Record<QueuePriority, string> = {
+  [QueuePriority.EMERGENCY]: 'E',
+  [QueuePriority.URGENT]: 'U',
+  [QueuePriority.SEMI_URGENT]: 'S',
+  [QueuePriority.NORMAL]: 'N',
+  [QueuePriority.LOW]: 'L',
+}
+
+const ENTRY_INCLUDE = {
+  patient: {
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          cpf: true,
+          phone: true,
+        },
+      },
+    },
+  },
+  hospital: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+} as const
 
 export class QueueManager {
   private io: Server
   private cache: RedisCache
+  private estimator: WaitTimeEstimator
+  private notifier: NotificationDispatcher
 
   constructor(io: Server) {
     this.io = io
     this.cache = new RedisCache()
+    this.estimator = new WaitTimeEstimator()
+    this.notifier = new NotificationDispatcher()
   }
 
   async addToQueue(queueEntry: Partial<QueueEntry>): Promise<QueueEntry> {
-    const position = await this.calculatePosition(
-      queueEntry.hospitalId!,
-      queueEntry.priority!
-    )
+    const hospitalId = queueEntry.hospitalId!
+    const priority = queueEntry.priority!
 
-    const estimatedWaitTime = await this.calculateEstimatedWaitTime(
-      queueEntry.hospitalId!,
+    const [position, ticketCode] = await Promise.all([
+      this.calculatePosition(hospitalId, priority),
+      this.generateTicketCode(hospitalId, priority),
+    ])
+
+    const { estimatedWaitTime } = await this.estimator.estimateForPosition(
+      hospitalId,
       position
     )
 
     const entry = await prisma.queueEntry.create({
       data: {
-        ...queueEntry as any,
+        ...(queueEntry as any),
         position,
+        ticketCode,
         estimatedWaitTime,
         status: QueueStatus.WAITING,
       },
-      include: {
-        patient: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                cpf: true,
-              },
-            },
-          },
-        },
-        hospital: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      include: ENTRY_INCLUDE,
     })
 
-    await this.cache.invalidateHospitalQueue(queueEntry.hospitalId!)
+    await this.cache.invalidateHospitalQueue(hospitalId)
 
-    this.io.to(`hospital:${queueEntry.hospitalId}`).emit('queue:update', {
+    this.io.to(`hospital:${hospitalId}`).emit('queue:update', {
       action: 'added',
       entry,
     })
 
-    this.io.to(`patient:${queueEntry.patientId}`).emit('queue:position', {
+    this.io.to(`patient:${entry.patientId}`).emit('queue:position', {
       position,
       estimatedWaitTime,
+      ticketCode,
     })
 
-    return entry as QueueEntry
+    const userId = (entry as any).patient?.userId
+    if (userId) {
+      void this.notifier.queueCheckIn(userId, {
+        hospitalName: (entry as any).hospital?.name ?? 'hospital',
+        ticketCode: ticketCode,
+        position,
+        estimatedWaitTime,
+      })
+    }
+
+    return entry as unknown as QueueEntry
   }
 
   async updateQueueEntry(
@@ -72,24 +105,7 @@ export class QueueManager {
     const entry = await prisma.queueEntry.update({
       where: { id },
       data: updates as any,
-      include: {
-        patient: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                cpf: true,
-              },
-            },
-          },
-        },
-        hospital: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      include: ENTRY_INCLUDE,
     })
 
     await this.cache.invalidateHospitalQueue(entry.hospitalId)
@@ -107,9 +123,10 @@ export class QueueManager {
       status: entry.status,
       position: entry.position,
       estimatedWaitTime: entry.estimatedWaitTime,
+      ticketCode: entry.ticketCode,
     })
 
-    return entry as QueueEntry
+    return entry as unknown as QueueEntry
   }
 
   async removeFromQueue(id: string): Promise<void> {
@@ -154,25 +171,7 @@ export class QueueManager {
         { priority: 'asc' },
         { checkInTime: 'asc' },
       ],
-      include: {
-        patient: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                cpf: true,
-                phone: true,
-              },
-            },
-          },
-        },
-        hospital: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      include: ENTRY_INCLUDE,
     })
 
     if (!nextEntry) {
@@ -181,6 +180,7 @@ export class QueueManager {
 
     const updatedEntry = await this.updateQueueEntry(nextEntry.id, {
       status: QueueStatus.IN_PROGRESS,
+      calledAt: new Date(),
       startTime: new Date(),
     })
 
@@ -189,7 +189,23 @@ export class QueueManager {
       message: 'Você foi chamado! Dirija-se ao atendimento.',
     })
 
-    return updatedEntry as QueueEntry
+    const userId = (nextEntry as any).patient?.userId
+    if (userId) {
+      void this.notifier.queueCalled(userId, {
+        hospitalName: (nextEntry as any).hospital?.name ?? 'hospital',
+        ticketCode: nextEntry.ticketCode,
+        roomNumber: updatedEntry.roomNumber ?? null,
+      })
+    }
+
+    return updatedEntry
+  }
+
+  /** Estimativa para quem ainda vai entrar na fila (usada na recomendação de unidades). */
+  async estimateForNewArrival(hospitalId: string, priority: QueuePriority) {
+    const position = await this.calculatePosition(hospitalId, priority)
+    const estimate = await this.estimator.estimateForPosition(hospitalId, position)
+    return { position, ...estimate }
   }
 
   private async calculatePosition(
@@ -204,52 +220,39 @@ export class QueueManager {
       [QueuePriority.LOW]: 4,
     }
 
+    const samePriorityOrHigher = Object.keys(priorityValues).filter(
+      (p) => priorityValues[p as QueuePriority] <= priorityValues[priority]
+    ) as QueuePriority[]
+
     const count = await prisma.queueEntry.count({
       where: {
         hospitalId,
         status: QueueStatus.WAITING,
-        OR: [
-          { priority: { in: Object.keys(priorityValues).filter(p => priorityValues[p as QueuePriority] <= priorityValues[priority]) as QueuePriority[] } },
-        ],
+        priority: { in: samePriorityOrHigher },
       },
     })
 
     return count + 1
   }
 
-  private async calculateEstimatedWaitTime(
+  /** Gera a senha do paciente no formato "N-042" (prefixo da prioridade + sequência do dia). */
+  private async generateTicketCode(
     hospitalId: string,
-    position: number
-  ): Promise<number> {
-    const averageServiceTime = 15
+    priority: QueuePriority
+  ): Promise<string> {
+    const startOfDay = new Date()
+    startOfDay.setHours(0, 0, 0, 0)
 
-    const completedToday = await prisma.queueEntry.findMany({
+    const todayCount = await prisma.queueEntry.count({
       where: {
         hospitalId,
-        status: QueueStatus.COMPLETED,
-        endTime: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        },
-      },
-      select: {
-        startTime: true,
-        endTime: true,
+        priority,
+        checkInTime: { gte: startOfDay },
       },
     })
 
-    if (completedToday.length > 0) {
-      const totalTime = completedToday.reduce((acc, entry) => {
-        if (entry.startTime && entry.endTime) {
-          return acc + (entry.endTime.getTime() - entry.startTime.getTime())
-        }
-        return acc
-      }, 0)
-
-      const avgTime = totalTime / completedToday.length / 1000 / 60
-      return Math.round((position - 1) * avgTime)
-    }
-
-    return (position - 1) * averageServiceTime
+    const sequence = String(todayCount + 1).padStart(3, '0')
+    return `${TICKET_PREFIX[priority]}-${sequence}`
   }
 
   private async recalculatePositions(hospitalId: string): Promise<void> {
@@ -262,12 +265,20 @@ export class QueueManager {
         { priority: 'asc' },
         { checkInTime: 'asc' },
       ],
+      include: {
+        patient: {
+          select: { userId: true },
+        },
+      },
     })
 
     for (let i = 0; i < waitingEntries.length; i++) {
       const entry = waitingEntries[i]
       const newPosition = i + 1
-      const estimatedWaitTime = await this.calculateEstimatedWaitTime(
+
+      if (entry.position === newPosition) continue
+
+      const { estimatedWaitTime } = await this.estimator.estimateForPosition(
         hospitalId,
         newPosition
       )
@@ -283,7 +294,18 @@ export class QueueManager {
       this.io.to(`patient:${entry.patientId}`).emit('queue:position', {
         position: newPosition,
         estimatedWaitTime,
+        ticketCode: entry.ticketCode,
       })
+
+      // Notifica fora do app apenas quem está perto de ser chamado,
+      // para não inundar o paciente de avisos.
+      if (newPosition <= 3 && entry.patient?.userId) {
+        void this.notifier.queuePositionUpdate(entry.patient.userId, {
+          ticketCode: entry.ticketCode,
+          position: newPosition,
+          estimatedWaitTime,
+        })
+      }
     }
 
     this.io.to(`hospital:${hospitalId}`).emit('queue:recalculated')
@@ -297,7 +319,7 @@ export class QueueManager {
       return cached
     }
 
-    const [totalWaiting, byPriority, bySpecialty] = await Promise.all([
+    const [totalWaiting, byPriority, bySpecialty, arrivalEstimate] = await Promise.all([
       prisma.queueEntry.count({
         where: {
           hospitalId,
@@ -320,11 +342,16 @@ export class QueueManager {
         },
         _count: true,
       }),
+      this.estimateForNewArrival(hospitalId, QueuePriority.NORMAL),
     ])
 
     const stats = {
       hospitalId,
       totalWaiting,
+      estimatedWaitForNewArrival: arrivalEstimate.estimatedWaitTime,
+      avgServiceMinutes: arrivalEstimate.avgServiceMinutes,
+      activeStations: arrivalEstimate.activeStations,
+      demandFactor: arrivalEstimate.demandFactor,
       byPriority: byPriority.reduce((acc, item) => {
         acc[item.priority] = item._count
         return acc

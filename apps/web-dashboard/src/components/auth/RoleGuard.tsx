@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Route } from 'next'
 import { useAuth } from '@/contexts/AuthContext'
 import { Loader2 } from 'lucide-react'
 
@@ -10,10 +11,10 @@ type UserRole = 'PATIENT' | 'DOCTOR' | 'NURSE' | 'HOSPITAL_ADMIN' | 'SYSTEM_ADMI
 interface RoleGuardProps {
   children: React.ReactNode
   allowedRoles: UserRole[]
-  redirectTo?: string
+  redirectTo?: Route
 }
 
-export function RoleGuard({ children, allowedRoles, redirectTo = '/dashboard' }: RoleGuardProps) {
+export function RoleGuard({ children, allowedRoles, redirectTo = '/dashboard' as Route }: RoleGuardProps) {
   const { user, isLoading } = useAuth()
   const router = useRouter()
 

@@ -15,9 +15,9 @@ COPY packages/shared-types/ ./packages/shared-types/
 COPY apps/api-gateway/ ./apps/api-gateway/
 
 # Build shared types first, then api-gateway
-RUN pnpm --filter @medgo/shared-types build
+RUN pnpm --filter @acolhe/shared-types build
 RUN cd apps/api-gateway && npx prisma generate
-RUN pnpm --filter @medgo/api-gateway build
+RUN pnpm --filter @acolhe/api-gateway build
 
 WORKDIR /app/apps/api-gateway
 

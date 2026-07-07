@@ -2,50 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Acolhe — design system glassmorphism
+ *
+ * Painéis de vidro fosco flutuando sobre um gradiente suave nas cores
+ * da marca (verde-acqua + âmbar): translucidez, backdrop-blur, bordas
+ * claras de 1px e brilho interno no topo. A senha de guichê continua
+ * sendo a metáfora central — agora como um cartão de vidro.
+ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --background: 180 35% 96%;
+    --foreground: 197 30% 14%;
+
+    --card: 180 30% 99%;
+    --card-foreground: 197 30% 14%;
+
+    --popover: 180 30% 99%;
+    --popover-foreground: 197 30% 14%;
+
+    /* Verde-acqua da marca */
+    --primary: 174 65% 30%;
+    --primary-foreground: 180 40% 98%;
+
+    --secondary: 180 25% 90%;
+    --secondary-foreground: 197 30% 18%;
+
+    --muted: 185 22% 90%;
+    --muted-foreground: 195 15% 38%;
+
+    --accent: 178 35% 90%;
+    --accent-foreground: 197 30% 16%;
+
+    /* Âmbar dos destaques */
+    --brass: 38 90% 48%;
+    --brass-foreground: 30 60% 98%;
+
+    --destructive: 356 72% 50%;
+    --destructive-foreground: 0 40% 98%;
+
+    --success: 152 55% 36%;
+    --success-foreground: 150 40% 98%;
+
+    --border: 185 25% 82%;
+    --input: 185 25% 78%;
+    --ring: 174 65% 36%;
+
+    --radius: 1rem;
+
+    /* Vidro (camadas translúcidas) */
+    --glass-bg: 255 255 255;
+    --glass-border: 255 255 255;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background: 200 40% 8%;
+    --foreground: 180 25% 92%;
+
+    --card: 200 30% 12%;
+    --card-foreground: 180 25% 92%;
+
+    --popover: 200 30% 12%;
+    --popover-foreground: 180 25% 92%;
+
+    --primary: 172 60% 45%;
+    --primary-foreground: 200 40% 8%;
+
+    --secondary: 199 28% 18%;
+    --secondary-foreground: 180 25% 88%;
+
+    --muted: 199 25% 17%;
+    --muted-foreground: 187 15% 62%;
+
+    --accent: 196 30% 20%;
+    --accent-foreground: 180 25% 90%;
+
+    --brass: 38 85% 55%;
+    --brass-foreground: 30 50% 8%;
+
+    --destructive: 356 70% 56%;
+    --destructive-foreground: 0 40% 98%;
+
+    --success: 152 50% 45%;
+    --success-foreground: 150 40% 98%;
+
+    --border: 196 25% 24%;
+    --input: 196 25% 28%;
+    --ring: 172 60% 50%;
+
+    --glass-bg: 16 34 40;
+    --glass-border: 148 210 200;
   }
 }
 
@@ -53,7 +100,158 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    /* Gradiente mesh nas cores da marca — o que o vidro desfoca */
+    background-image:
+      radial-gradient(38rem 38rem at 12% -8%, hsl(174 70% 62% / 0.32), transparent 62%),
+      radial-gradient(30rem 30rem at 88% 12%, hsl(38 95% 62% / 0.20), transparent 60%),
+      radial-gradient(36rem 36rem at 78% 92%, hsl(190 75% 55% / 0.22), transparent 62%),
+      radial-gradient(26rem 26rem at 8% 85%, hsl(152 60% 55% / 0.16), transparent 60%);
+    background-attachment: fixed;
   }
+
+  .dark body {
+    background-image:
+      radial-gradient(38rem 38rem at 12% -8%, hsl(174 70% 30% / 0.35), transparent 62%),
+      radial-gradient(30rem 30rem at 88% 12%, hsl(38 90% 40% / 0.14), transparent 60%),
+      radial-gradient(36rem 36rem at 78% 92%, hsl(200 80% 30% / 0.30), transparent 62%);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  /* ── Camadas de vidro ─────────────────────────────────────────────── */
+
+  /* Painel padrão (cartões, modais) */
+  .glass {
+    background: linear-gradient(
+      160deg,
+      rgb(var(--glass-bg) / 0.62),
+      rgb(var(--glass-bg) / 0.38)
+    );
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgb(var(--glass-border) / 0.55);
+    box-shadow:
+      inset 0 1px 0 rgb(var(--glass-border) / 0.65),
+      0 8px 32px hsl(197 45% 30% / 0.14);
+  }
+
+  .dark .glass {
+    border-color: rgb(var(--glass-border) / 0.16);
+    box-shadow:
+      inset 0 1px 0 rgb(var(--glass-border) / 0.14),
+      0 8px 32px hsl(0 0% 0% / 0.45);
+  }
+
+  /* Vidro mais denso (header, sidebar, barras fixas) */
+  .glass-strong {
+    background: rgb(var(--glass-bg) / 0.72);
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
+    border: 1px solid rgb(var(--glass-border) / 0.45);
+    box-shadow: 0 4px 24px hsl(197 45% 30% / 0.10);
+  }
+
+  .dark .glass-strong {
+    border-color: rgb(var(--glass-border) / 0.14);
+    box-shadow: 0 4px 24px hsl(0 0% 0% / 0.40);
+  }
+
+  /* Vidro leve (inputs, poços, células) */
+  .glass-subtle {
+    background: rgb(var(--glass-bg) / 0.40);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgb(var(--glass-border) / 0.45);
+  }
+
+  .dark .glass-subtle {
+    border-color: rgb(var(--glass-border) / 0.14);
+  }
+
+  /* ── Superfícies coloridas translúcidas (botões) ──────────────────── */
+
+  .tint-teal {
+    background: linear-gradient(160deg, hsl(174 60% 38% / 0.92), hsl(180 65% 28% / 0.92));
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsl(174 55% 60% / 0.55);
+    box-shadow:
+      inset 0 1px 0 hsl(174 60% 85% / 0.45),
+      0 4px 16px hsl(174 65% 30% / 0.35);
+  }
+
+  .tint-amber {
+    background: linear-gradient(160deg, hsl(40 95% 55% / 0.92), hsl(34 90% 45% / 0.92));
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsl(42 95% 72% / 0.6);
+    box-shadow:
+      inset 0 1px 0 hsl(45 100% 88% / 0.5),
+      0 4px 16px hsl(36 90% 40% / 0.35);
+  }
+
+  .tint-red {
+    background: linear-gradient(160deg, hsl(356 75% 55% / 0.92), hsl(352 70% 44% / 0.92));
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsl(356 80% 72% / 0.55);
+    box-shadow:
+      inset 0 1px 0 hsl(356 90% 88% / 0.4),
+      0 4px 16px hsl(356 70% 40% / 0.35);
+  }
+
+  /* ── Detalhes ─────────────────────────────────────────────────────── */
+
+  /* Brilho diagonal de vidro (reflexo) */
+  .glass-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .glass-sheen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 30%,
+      rgb(var(--glass-border) / 0.14) 42%,
+      rgb(var(--glass-border) / 0.05) 55%,
+      transparent 62%
+    );
+    pointer-events: none;
+  }
+
+  /* Aro luminoso para o item ativo da navegação */
+  .glow-ring {
+    box-shadow:
+      inset 0 1px 0 rgb(var(--glass-border) / 0.35),
+      0 0 0 1px hsl(var(--brass) / 0.45),
+      0 2px 12px hsl(var(--brass) / 0.25);
+  }
+}
+
+/* Rótulos permanentes dos marcadores do mapa (Leaflet) */
+.hospital-map-label {
+  background: rgb(255 255 255 / 0.88);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgb(255 255 255 / 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px hsl(197 45% 30% / 0.18);
+  color: hsl(197 30% 14%);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+}
+
+.hospital-map-label::before {
+  display: none;
 }

@@ -1,4 +1,4 @@
-# 🚀 Guia Rápido - MedGo
+# 🚀 Guia Rápido - Acolhe
 
 ## Pré-requisitos
 
@@ -50,9 +50,9 @@ docker compose ps
 ```
 
 Você deve ver:
-- `medgo-postgres` - Rodando na porta 5432
-- `medgo-redis` - Rodando na porta 6379
-- `medgo-adminer` - Rodando na porta 8080
+- `acolhe-postgres` - Rodando na porta 5432
+- `acolhe-redis` - Rodando na porta 6379
+- `acolhe-adminer` - Rodando na porta 8080
 
 ### Passo 2: Instalar Dependências
 ```bash
@@ -129,10 +129,10 @@ Isso iniciará:
 ### Ferramentas
 - **Adminer (DB Admin):** http://localhost:8080
   - Sistema: PostgreSQL
-  - Servidor: medgo-postgres
-  - Usuário: medgo
-  - Senha: medgo123
-  - Base de dados: medgo
+  - Servidor: acolhe-postgres
+  - Usuário: acolhe
+  - Senha: acolhe123
+  - Base de dados: acolhe
 
 ---
 
@@ -223,7 +223,7 @@ Você pode usar a API ou Prisma Studio:
 curl -X POST http://localhost:3001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@medgo.com",
+    "email": "admin@acolhe.com",
     "password": "admin123",
     "name": "Administrador",
     "cpf": "12345678901",

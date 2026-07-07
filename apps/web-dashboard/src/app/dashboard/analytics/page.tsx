@@ -61,7 +61,7 @@ export default function AnalyticsPage() {
       <div>
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Analytics</h2>
         <p className="text-muted-foreground">
-          Métricas e análises do sistema MedGo
+          Métricas e análises do sistema Acolhe
         </p>
       </div>
 

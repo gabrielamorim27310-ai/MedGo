@@ -87,7 +87,7 @@ useEffect(() => {
       <div>
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground">
-          Visão geral do sistema MedGo
+          Visão geral do sistema Acolhe
         </p>
       </div>
 
@@ -185,7 +185,7 @@ useEffect(() => {
           <CardContent>
             <div className="space-y-4">
               <a href="/dashboard/patients" className="flex items-center p-3 rounded-lg hover:bg-muted transition-colors">
-                <Users className="h-5 w-5 mr-3 text-blue-500" />
+                <Users className="h-5 w-5 mr-3 text-primary" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
                     Gerenciar Pacientes
@@ -196,7 +196,7 @@ useEffect(() => {
                 </div>
               </a>
               <a href="/dashboard/hospitals" className="flex items-center p-3 rounded-lg hover:bg-muted transition-colors">
-                <Building2 className="h-5 w-5 mr-3 text-green-500" />
+                <Building2 className="h-5 w-5 mr-3 text-success" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
                     Gerenciar Hospitais
@@ -207,7 +207,7 @@ useEffect(() => {
                 </div>
               </a>
               <a href="/dashboard/queues" className="flex items-center p-3 rounded-lg hover:bg-muted transition-colors">
-                <Clock className="h-5 w-5 mr-3 text-orange-500" />
+                <Clock className="h-5 w-5 mr-3 text-brass" />
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
                     Filas de Atendimento

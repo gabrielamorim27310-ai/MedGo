@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt'
 import { AuthRequest } from '../middlewares/auth'
 import { AppError } from '../middlewares/errorHandler'
 import { prisma } from '../lib/prisma'
-import { UpdateUserDTO } from '@medgo/shared-types'
+import { UpdateUserDTO } from '@acolhe/shared-types'
 
 export class UserController {
   async list(req: Request, res: Response, next: NextFunction) {

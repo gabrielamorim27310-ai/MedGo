@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Iniciando MedGo..."
+echo "🚀 Iniciando Acolhe..."
 echo ""
 
 # Verificar se Docker está rodando
@@ -18,7 +18,7 @@ docker-compose up -d
 
 # Aguardar PostgreSQL ficar pronto
 echo "⏳ Aguardando PostgreSQL ficar pronto..."
-until docker exec medgo-postgres pg_isready -U medgo > /dev/null 2>&1; do
+until docker exec acolhe-postgres pg_isready -U acolhe > /dev/null 2>&1; do
   sleep 1
 done
 
@@ -32,7 +32,7 @@ npx prisma migrate dev --name init
 cd ../..
 
 echo ""
-echo "✨ MedGo está pronto para uso!"
+echo "✨ Acolhe está pronto para uso!"
 echo ""
 echo "📝 Próximos passos:"
 echo "   1. Rodar API Gateway:        pnpm dev:api"

@@ -1,4 +1,4 @@
-# Changelog - MedGo
+# Changelog - Acolhe
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 

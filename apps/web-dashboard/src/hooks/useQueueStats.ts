@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { useApi } from './useApi'
-import { QueueStatistics } from '@medgo/shared-types'
+import { QueueStatistics } from '@acolhe/shared-types'
 
 export function useQueueStats(hospitalId: string, refreshInterval = 30000) {
   const [stats, setStats] = useState<QueueStatistics | null>(null)

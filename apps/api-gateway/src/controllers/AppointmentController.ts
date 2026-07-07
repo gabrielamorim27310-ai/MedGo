@@ -5,8 +5,9 @@ import {
   AppointmentType,
   CreateAppointmentDTO,
   UpdateAppointmentDTO,
-} from '@medgo/shared-types'
+} from '@acolhe/shared-types'
 import { AppointmentNotificationService } from '../services/AppointmentNotificationService'
+import { tissService } from '../services/TissService'
 
 export class AppointmentController {
   private notificationService: AppointmentNotificationService
@@ -15,7 +16,7 @@ export class AppointmentController {
     this.notificationService = new AppointmentNotificationService()
   }
 
-  async create(req: Request, res: Response) {
+  create = async (req: Request, res: Response) => {
     try {
       const data: CreateAppointmentDTO = req.body
 
@@ -64,6 +65,28 @@ export class AppointmentController {
       if (hospitalId) where.hospitalId = hospitalId
       if (patientId) where.patientId = patientId
       if (doctorId) where.doctorId = doctorId
+
+      // Paciente só enxerga os próprios agendamentos (LGPD)
+      const requester = (req as any).user
+      if (requester?.role === 'PATIENT') {
+        const ownPatient = await prisma.patient.findUnique({
+          where: { userId: requester.id },
+          select: { id: true },
+        })
+
+        if (!ownPatient) {
+          res.json({
+            data: [],
+            total: 0,
+            page: parseInt(page as string),
+            limit: parseInt(limit as string),
+            totalPages: 0,
+          })
+          return
+        }
+
+        where.patientId = ownPatient.id
+      }
 
       if (startDate || endDate) {
         where.scheduledDate = {}
@@ -146,6 +169,12 @@ export class AppointmentController {
         return res.status(404).json({ message: 'Appointment not found' })
       }
 
+      // Paciente só acessa agendamento próprio (LGPD)
+      const requester = (req as any).user
+      if (requester?.role === 'PATIENT' && appointment.patient?.userId !== requester.id) {
+        return res.status(403).json({ message: 'Acesso negado a agendamento de outro paciente' })
+      }
+
       res.json(appointment)
     } catch (error) {
       console.error('Error fetching appointment:', error)
@@ -199,7 +228,7 @@ export class AppointmentController {
     }
   }
 
-  async confirm(req: Request, res: Response) {
+  confirm = async (req: Request, res: Response) => {
     try {
       const { id } = req.params
 
@@ -223,6 +252,8 @@ export class AppointmentController {
         },
       })
 
+      await this.notificationService.notifyAppointmentConfirmed(appointment as any)
+
       res.json(appointment)
     } catch (error) {
       console.error('Error confirming appointment:', error)
@@ -230,7 +261,7 @@ export class AppointmentController {
     }
   }
 
-  async cancel(req: Request, res: Response) {
+  cancel = async (req: Request, res: Response) => {
     try {
       const { id } = req.params
       const { reason } = req.body
@@ -256,6 +287,11 @@ export class AppointmentController {
         },
       })
 
+      await this.notificationService.notifyAppointmentCancelled({
+        ...(appointment as any),
+        cancellationReason: reason,
+      })
+
       res.json(appointment)
     } catch (error) {
       console.error('Error cancelling appointment:', error)
@@ -263,7 +299,7 @@ export class AppointmentController {
     }
   }
 
-  async reschedule(req: Request, res: Response) {
+  reschedule = async (req: Request, res: Response) => {
     try {
       const { id } = req.params
       const { scheduledDate, reason } = req.body
@@ -289,6 +325,8 @@ export class AppointmentController {
           hospital: true,
         },
       })
+
+      await this.notificationService.notifyAppointmentRescheduled(appointment as any)
 
       res.json(appointment)
     } catch (error) {
@@ -328,16 +366,25 @@ export class AppointmentController {
     }
   }
 
-  async complete(req: Request, res: Response) {
+  complete = async (req: Request, res: Response) => {
     try {
       const { id } = req.params
-      const { notes } = req.body
+      const { notes, diagnosis, prescription, cid10, tussProcedures } = req.body
+
+      // Conclusão do atendimento alimenta o prontuário eletrônico e já
+      // emite o número da guia TISS para faturamento junto à operadora.
+      const tissGuideNumber = await tissService.generateGuideNumber()
 
       const appointment = await prisma.appointment.update({
         where: { id },
         data: {
           status: AppointmentStatus.COMPLETED,
           notes: notes || undefined,
+          diagnosis: diagnosis || undefined,
+          prescription: prescription || undefined,
+          cid10: cid10 || undefined,
+          tussProcedures: tussProcedures || undefined,
+          tissGuideNumber,
         },
         include: {
           patient: {
@@ -358,6 +405,22 @@ export class AppointmentController {
     } catch (error) {
       console.error('Error completing appointment:', error)
       res.status(500).json({ message: 'Error completing appointment' })
+    }
+  }
+
+  /** Guia TISS do atendimento concluído (padrão ANS), pronta para a operadora. */
+  getTissGuide = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params
+      const guide = await tissService.buildGuide(id)
+      res.json(guide)
+    } catch (error: any) {
+      if (error?.statusCode) {
+        res.status(error.statusCode).json({ message: error.message })
+        return
+      }
+      console.error('Error building TISS guide:', error)
+      res.status(500).json({ message: 'Error building TISS guide' })
     }
   }
 

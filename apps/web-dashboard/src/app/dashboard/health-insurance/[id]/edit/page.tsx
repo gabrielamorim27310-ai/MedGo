@@ -305,7 +305,7 @@ export default function EditHealthInsurancePage() {
                 <Input
                   id="oauthRedirectUri"
                   {...register('oauthRedirectUri')}
-                  placeholder="https://medgo-frontend.vercel.app/oauth/callback"
+                  placeholder="https://acolhe-frontend.vercel.app/oauth/callback"
                 />
                 <p className="text-xs text-muted-foreground">
                   Esta URL deve ser registrada como URI de callback no painel OAuth da operadora

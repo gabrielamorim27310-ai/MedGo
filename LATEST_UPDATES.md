@@ -1,4 +1,4 @@
-# 🚀 Últimas Atualizações - MedGo (24/01/2026)
+# 🚀 Últimas Atualizações - Acolhe (24/01/2026)
 
 ## ⭐ Grandes Implementações
 
@@ -64,7 +64,7 @@ Sistema completo de geração de relatórios com múltiplos formatos.
    - Formato JSON
 
 4. **Relatório Completo do Sistema**
-   - Visão 360° do sistema MedGo
+   - Visão 360° do sistema Acolhe
    - Overview + Agendamentos + Filas + Top Hospitais
    - Formato JSON estruturado
 
@@ -297,7 +297,7 @@ apps/analytics-service/src/
 
 ## 🎉 Conclusão
 
-Nesta atualização, o MedGo ganhou:
+Nesta atualização, o Acolhe ganhou:
 - 📊 **Sistema completo de visualização** com gráficos profissionais
 - 📄 **Sistema robusto de relatórios** com exportação
 - 🔍 **Filtros avançados** para análise personalizada

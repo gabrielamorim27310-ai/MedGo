@@ -1,4 +1,4 @@
-# Status de Execução - MedGo
+# Status de Execução - Acolhe
 
 ## ✅ O que já está pronto:
 
@@ -37,7 +37,7 @@ Se mostrar uma lista (mesmo vazia), está funcionando!
 ### 3. Subir os containers
 
 ```bash
-cd c:\Users\rafa_\medgo
+cd c:\Users\rafa_\acolhe
 pnpm docker:up
 ```
 

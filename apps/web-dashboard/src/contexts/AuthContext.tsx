@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { User, LoginDTO, AuthResponse } from '@medgo/shared-types'
+import { User, LoginDTO, AuthResponse } from '@acolhe/shared-types'
 import { api } from '@/lib/api'
 
 interface LoginResult {
@@ -13,6 +13,7 @@ interface AuthContextData {
   isAuthenticated: boolean
   isLoading: boolean
   login: (credentials: LoginDTO) => Promise<LoginResult>
+  loginWithGoogle: (credential: string) => Promise<User>
   logout: () => void
   updateUser: (updatedUser: User) => void
 }
@@ -60,6 +61,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // SSO Google: troca a credencial do Google Identity Services pelo JWT da Acolhe
+  const loginWithGoogle = async (credential: string): Promise<User> => {
+    const response = await api.post<AuthResponse>('/auth/google', { credential })
+    const { user, token, refreshToken } = response.data
+
+    localStorage.setItem('user', JSON.stringify(user))
+    localStorage.setItem('token', token)
+    localStorage.setItem('refreshToken', refreshToken)
+
+    // Set cookie for middleware authentication
+    document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 days
+
+    setUser(user)
+
+    return user
+  }
+
   const updateUser = (updatedUser: User) => {
     setUser(updatedUser)
     localStorage.setItem('user', JSON.stringify(updatedUser))
@@ -81,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWithGoogle,
         logout,
         updateUser,
       }}

@@ -1,7 +1,10 @@
 import { Request, Response, NextFunction } from 'express'
 import { AppError } from '../middlewares/errorHandler'
 import { prisma } from '../lib/prisma'
-import { CreateQueueEntryDTO, UpdateQueueEntryDTO, QueueStatus } from '@medgo/shared-types'
+import { CreateQueueEntryDTO, UpdateQueueEntryDTO, QueueStatus, QueuePriority } from '@acolhe/shared-types'
+import { queueServiceClient } from '../services/QueueServiceClient'
+import { eligibilityService } from '../services/EligibilityService'
+import { AuthRequest } from '../middlewares/auth'
 
 export class QueueController {
   async list(req: Request, res: Response, next: NextFunction) {
@@ -60,6 +63,45 @@ export class QueueController {
           total,
           pages: Math.ceil(total / Number(limit)),
         },
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  /** Filas do paciente autenticado: ativas e histórico. */
+  myQueues = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) {
+        throw new AppError('Não autenticado', 401)
+      }
+
+      const patient = await prisma.patient.findUnique({
+        where: { userId: req.user.id },
+        select: { id: true },
+      })
+
+      if (!patient) {
+        res.json({ active: [], history: [] })
+        return
+      }
+
+      const entries = await prisma.queueEntry.findMany({
+        where: { patientId: patient.id },
+        include: {
+          hospital: {
+            select: { id: true, name: true, city: true, state: true },
+          },
+        },
+        orderBy: { checkInTime: 'desc' },
+        take: 50,
+      })
+
+      const activeStatuses: QueueStatus[] = [QueueStatus.WAITING, QueueStatus.IN_PROGRESS]
+
+      res.json({
+        active: entries.filter((e) => activeStatuses.includes(e.status as QueueStatus)),
+        history: entries.filter((e) => !activeStatuses.includes(e.status as QueueStatus)),
       })
     } catch (error) {
       next(error)
@@ -136,6 +178,17 @@ export class QueueController {
     try {
       const { hospitalId } = req.params
 
+      // Estatísticas em tempo real vêm do queue-service (com cache Redis
+      // e estimativa dinâmica); em caso de indisponibilidade, calcula
+      // localmente a partir do banco.
+      try {
+        const stats = await queueServiceClient.getStats(hospitalId)
+        res.json(stats)
+        return
+      } catch {
+        console.warn('[QueueController] queue-service indisponível, calculando stats localmente')
+      }
+
       const [totalWaiting, byPriority, bySpecialty] = await Promise.all([
         prisma.queueEntry.count({
           where: {
@@ -194,12 +247,90 @@ export class QueueController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  /**
+   * Check-in na fila virtual. Fluxo integrado:
+   * 1. Resolve o paciente (o próprio usuário, quando role PATIENT).
+   * 2. Verifica elegibilidade junto à operadora (convênio + cobertura).
+   * 3. Delega ao queue-service: posição, senha, estimativa dinâmica,
+   *    eventos WebSocket e notificação de check-in.
+   */
+  create = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const data = req.body as CreateQueueEntryDTO
+      let patientId = data.patientId
 
+      // Paciente autenticado só entra na fila em nome próprio.
+      if (req.user?.role === 'PATIENT') {
+        const ownPatient = await prisma.patient.findUnique({
+          where: { userId: req.user.id },
+          select: { id: true },
+        })
+
+        if (!ownPatient) {
+          throw new AppError('Cadastro de paciente não encontrado para este usuário', 404)
+        }
+
+        patientId = ownPatient.id
+      }
+
+      const hospital = await prisma.hospital.findUnique({
+        where: { id: data.hospitalId },
+        select: { id: true, status: true },
+      })
+
+      if (!hospital) {
+        throw new AppError('Hospital não encontrado', 404)
+      }
+
+      if (hospital.status !== 'ACTIVE') {
+        throw new AppError('Hospital não está recebendo pacientes no momento', 422)
+      }
+
+      const eligibility = await eligibilityService.check({
+        patientId,
+        hospitalId: data.hospitalId,
+        specialty: data.specialty,
+        isEmergency:
+          data.priority === QueuePriority.EMERGENCY ||
+          data.priority === QueuePriority.URGENT,
+      })
+
+      if (!eligibility.eligible) {
+        throw new AppError(
+          `Cobertura não confirmada: ${eligibility.reasons.join('; ')}`,
+          422
+        )
+      }
+
+      const payload = {
+        hospitalId: data.hospitalId,
+        patientId,
+        priority: data.priority,
+        specialty: data.specialty,
+        symptoms: data.symptoms,
+        eligibility: eligibility as unknown as Record<string, unknown>,
+      }
+
+      try {
+        const entry = await queueServiceClient.addToQueue(payload)
+        res.status(201).json(entry)
+        return
+      } catch {
+        console.warn(
+          '[QueueController] queue-service indisponível, registrando check-in direto no banco'
+        )
+      }
+
+      // Fallback degradado: registra a entrada sem tempo real.
       const queue = await prisma.queueEntry.create({
-        data,
+        data: {
+          hospitalId: payload.hospitalId,
+          patientId: payload.patientId,
+          priority: payload.priority,
+          specialty: payload.specialty,
+          symptoms: payload.symptoms,
+          eligibility: payload.eligibility as any,
+        },
         include: {
           patient: {
             include: {
@@ -230,6 +361,16 @@ export class QueueController {
       const { id } = req.params
       const data = req.body as UpdateQueueEntryDTO
 
+      // Delegar ao queue-service mantém posições, estimativas e eventos
+      // em tempo real consistentes.
+      try {
+        const entry = await queueServiceClient.updateEntry(id, data as any)
+        res.json(entry)
+        return
+      } catch {
+        console.warn('[QueueController] queue-service indisponível, atualizando direto no banco')
+      }
+
       const queue = await prisma.queueEntry.update({
         where: { id },
         data,
@@ -258,9 +399,39 @@ export class QueueController {
     }
   }
 
+  /** Chama o próximo paciente da fila (painel da recepção). */
+  async callNext(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { hospitalId, specialty } = req.body
+
+      if (!hospitalId) {
+        throw new AppError('hospitalId é obrigatório', 400)
+      }
+
+      const entry = await queueServiceClient.callNext(hospitalId, specialty)
+
+      if (!entry) {
+        res.json({ message: 'Fila vazia', entry: null })
+        return
+      }
+
+      res.json(entry)
+    } catch (error) {
+      next(error)
+    }
+  }
+
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params
+
+      try {
+        await queueServiceClient.removeEntry(id)
+        res.status(204).send()
+        return
+      } catch {
+        console.warn('[QueueController] queue-service indisponível, removendo direto no banco')
+      }
 
       await prisma.queueEntry.delete({
         where: { id },

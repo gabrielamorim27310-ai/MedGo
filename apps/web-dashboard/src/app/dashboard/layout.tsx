@@ -34,7 +34,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       <main className="mt-16 p-4 lg:ml-64 lg:p-6">{children}</main>

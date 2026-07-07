@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Route } from 'next'
 import { useAuth } from '@/contexts/AuthContext'
+import { Logo } from '@/components/branding/Logo'
 import {
-  Activity,
   LayoutDashboard,
   Users,
   Building2,
@@ -155,29 +155,28 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar: painel de vidro escuro verde-acqua */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-50 h-screen w-64 border-r bg-card transition-transform duration-300 ease-in-out',
+          'fixed left-0 top-0 z-50 h-screen w-64 transition-transform duration-300 ease-in-out',
+          'border-r border-white/10 bg-[hsl(186_45%_11%/0.82)] backdrop-blur-2xl backdrop-saturate-150',
+          'shadow-[4px_0_24px_rgba(8,30,28,0.25)]',
           'lg:translate-x-0 lg:z-40',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b px-6">
-          <div className="flex items-center gap-2">
-            <Activity className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">MedGo</span>
-          </div>
+        <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
+          <Logo size={32} withWordmark onDark />
           {/* Botão fechar no mobile */}
           <button
             onClick={onClose}
-            className="lg:hidden rounded-md p-1 hover:bg-accent"
+            className="lg:hidden rounded-lg p-1 text-white/60 hover:bg-white/10 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="space-y-1 p-4 overflow-y-auto h-[calc(100vh-4rem)]">
+        <nav className="space-y-1.5 p-4 overflow-y-auto h-[calc(100vh-4rem)]">
           {filteredMenuItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
@@ -188,10 +187,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 href={item.href}
                 onClick={onClose}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  'relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    ? // Vidro aceso com aro âmbar
+                      'bg-white/[0.12] text-white glow-ring backdrop-blur-md'
+                    : 'text-[#B9D6D0]/80 hover:bg-white/[0.08] hover:text-white'
                 )}
               >
                 <Icon className="h-5 w-5" />

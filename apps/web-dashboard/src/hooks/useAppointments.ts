@@ -5,7 +5,7 @@ import {
   CreateAppointmentDTO,
   UpdateAppointmentDTO,
   AppointmentStatus,
-} from '@medgo/shared-types'
+} from '@acolhe/shared-types'
 
 // Tipo estendido com relações expandidas (retornado pela API)
 export interface AppointmentWithRelations extends Appointment {

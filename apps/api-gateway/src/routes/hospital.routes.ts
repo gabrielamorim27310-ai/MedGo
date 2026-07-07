@@ -1,12 +1,13 @@
 import { Router } from 'express'
 import { HospitalController } from '../controllers/HospitalController'
 import { authenticate, authorize } from '../middlewares/auth'
-import { UserRole } from '@medgo/shared-types'
+import { UserRole } from '@acolhe/shared-types'
 
 const router = Router()
 const hospitalController = new HospitalController()
 
 router.get('/', hospitalController.list)
+router.get('/nearby', hospitalController.nearby)
 router.get('/:id', hospitalController.getById)
 
 router.use(authenticate)

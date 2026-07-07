@@ -6,13 +6,14 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { UserRole } from '@medgo/shared-types'
+import { UserRole } from '@acolhe/shared-types'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Activity, ArrowLeft, ExternalLink, Shield, Loader2 } from 'lucide-react'
+import { Logo } from '@/components/branding/Logo'
+import { Activity, ArrowLeft, ExternalLink, Shield, Loader2, MailCheck } from 'lucide-react'
 
 interface HealthInsurance {
   id: string
@@ -42,6 +43,10 @@ const registerSchema = z.object({
   phone: z.string().min(10, 'Telefone deve ter no mínimo 10 dígitos'),
   role: z.nativeEnum(UserRole),
 
+  // Professional fields (médico/enfermeiro/recepção/admin hospitalar)
+  professionalLicense: z.string().optional(),
+  hospitalId: z.string().optional(),
+
   // Patient fields
   dateOfBirth: z.string().optional(),
   bloodType: z.string().optional(),
@@ -52,6 +57,11 @@ const registerSchema = z.object({
   emergencyContactRelationship: z.string().optional(),
   healthInsuranceNumber: z.string().optional(),
   healthInsuranceId: z.string().optional(),
+
+  // LGPD
+  lgpdConsent: z.boolean().refine((value) => value === true, {
+    message: 'É necessário aceitar a política de privacidade para criar a conta',
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Senhas não conferem',
   path: ['confirmPassword'],
@@ -87,6 +97,14 @@ const registerSchema = z.object({
 }, {
   message: 'Parentesco é obrigatório',
   path: ['emergencyContactRelationship'],
+}).refine((data) => {
+  if (data.role === UserRole.DOCTOR || data.role === UserRole.NURSE) {
+    return !!data.professionalLicense && data.professionalLicense.trim().length >= 4
+  }
+  return true
+}, {
+  message: 'Registro profissional é obrigatório (CRM/COREN)',
+  path: ['professionalLicense'],
 })
 
 type RegisterForm = z.infer<typeof registerSchema>
@@ -106,7 +124,9 @@ function RegisterPageContent() {
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [needsEmailVerification, setNeedsEmailVerification] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [hospitalOptions, setHospitalOptions] = useState<{ id: string; name: string; city: string }[]>([])
   const [healthInsurances, setHealthInsurances] = useState<HealthInsurance[]>([])
   const [loadingInsurances, setLoadingInsurances] = useState(true)
   const [selectedInsurance, setSelectedInsurance] = useState<HealthInsurance | null>(null)
@@ -122,11 +142,17 @@ function RegisterPageContent() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       role: UserRole.PATIENT,
+      lgpdConsent: false,
     },
   })
 
   const selectedRole = watch('role')
   const isPatient = selectedRole === UserRole.PATIENT
+  const isProfessional = selectedRole === UserRole.DOCTOR || selectedRole === UserRole.NURSE
+  const needsHospital =
+    isProfessional ||
+    selectedRole === UserRole.RECEPTIONIST ||
+    selectedRole === UserRole.HOSPITAL_ADMIN
 
   // Fetch health insurances on mount
   useEffect(() => {
@@ -142,6 +168,14 @@ function RegisterPageContent() {
     }
 
     fetchInsurances()
+  }, [])
+
+  // Lista de hospitais para vínculo de profissionais
+  useEffect(() => {
+    api
+      .get('/hospitals?limit=100')
+      .then((res) => setHospitalOptions(res.data.data || []))
+      .catch(() => setHospitalOptions([]))
   }, [])
 
   // Handle OAuth callback data from URL params
@@ -210,6 +244,14 @@ function RegisterPageContent() {
         cpf: data.cpf.replace(/\D/g, ''),
         phone: data.phone.replace(/\D/g, ''),
         role: data.role,
+        lgpdConsent: data.lgpdConsent,
+        lgpdConsentVersion: '1.0',
+      }
+
+      // Vínculo profissional (médico/enfermeiro/recepção/admin hospitalar)
+      if (data.role !== UserRole.PATIENT) {
+        payload.professionalLicense = data.professionalLicense || undefined
+        payload.hospitalId = data.hospitalId || undefined
       }
 
       // Adicionar campos de paciente se for PATIENT
@@ -225,12 +267,16 @@ function RegisterPageContent() {
         payload.healthInsuranceId = data.healthInsuranceId || undefined
       }
 
-      await api.post('/auth/register', payload)
+      const response = await api.post('/auth/register', payload)
+      setNeedsEmailVerification(Boolean(response.data?.requiresEmailVerification))
       setSuccess(true)
 
-      setTimeout(() => {
-        router.push('/login')
-      }, 2000)
+      // Sem verificação pendente, segue direto para o login
+      if (!response.data?.requiresEmailVerification) {
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
+      }
     } catch (err: any) {
       if (err.response?.status === 409) {
         setError('Email ou CPF já cadastrado')
@@ -257,21 +303,41 @@ function RegisterPageContent() {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`
   }
 
-  const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+  const selectClass = "flex h-10 w-full rounded-xl glass-subtle px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <Activity className="h-8 w-8 text-green-600" />
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto tint-teal shadow-glow-teal">
+                {needsEmailVerification ? (
+                  <MailCheck className="h-8 w-8 text-primary-foreground" />
+                ) : (
+                  <Activity className="h-8 w-8 text-primary-foreground" />
+                )}
               </div>
-              <h2 className="text-2xl font-bold text-green-600">Conta criada com sucesso!</h2>
-              <p className="text-muted-foreground">
-                Redirecionando para o login...
-              </p>
+              <h2 className="text-2xl font-bold text-primary">Conta criada com sucesso!</h2>
+              {needsEmailVerification ? (
+                <>
+                  <p className="text-muted-foreground">
+                    Enviamos um link de verificação para o seu e-mail.
+                    Confirme o endereço para liberar o acesso.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => router.push('/login')}
+                  >
+                    Ir para o login
+                  </Button>
+                </>
+              ) : (
+                <p className="text-muted-foreground">
+                  Redirecionando para o login...
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -280,16 +346,15 @@ function RegisterPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+    <div className="min-h-screen flex items-center justify-center py-8">
       <Card className="w-full max-w-2xl mx-4">
         <CardHeader className="space-y-1 flex flex-col items-center">
-          <div className="flex items-center gap-2 mb-2">
-            <Activity className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold">MedGo</h1>
+          <div className="mb-2">
+            <Logo size={44} withWordmark />
           </div>
           <CardTitle className="text-xl sm:text-2xl">Criar Conta</CardTitle>
           <CardDescription>
-            Preencha os dados abaixo para criar sua conta
+            Preencha a ficha abaixo para criar sua conta
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -314,12 +379,58 @@ function RegisterPageContent() {
               )}
             </div>
 
+            {/* Vínculo profissional — muda conforme a categoria */}
+            {needsHospital && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Vínculo Profissional
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {isProfessional && (
+                    <div className="space-y-2">
+                      <Label htmlFor="professionalLicense">
+                        {selectedRole === UserRole.DOCTOR ? 'CRM *' : 'COREN *'}
+                      </Label>
+                      <Input
+                        id="professionalLicense"
+                        placeholder={selectedRole === UserRole.DOCTOR ? 'CRM/SP 123456' : 'COREN/SP 123456'}
+                        {...register('professionalLicense')}
+                        disabled={isLoading}
+                      />
+                      {errors.professionalLicense && (
+                        <p className="text-sm text-destructive">{errors.professionalLicense.message}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className={isProfessional ? 'space-y-2' : 'space-y-2 sm:col-span-2'}>
+                    <Label htmlFor="hospitalId">Hospital / Clínica onde atua</Label>
+                    <select
+                      id="hospitalId"
+                      className={selectClass}
+                      {...register('hospitalId')}
+                      disabled={isLoading}
+                    >
+                      <option value="">Selecione...</option>
+                      {hospitalOptions.map((h) => (
+                        <option key={h.id} value={h.id}>
+                          {h.name} — {h.city}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Health Insurance Selection - only for patients */}
             {isPatient && healthInsurances.length > 0 && (
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Vincular Plano de Saúde</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Vincular Plano de Saúde (opcional)</h3>
                 <p className="text-sm text-muted-foreground">
-                  Conecte com seu plano de saúde para importar seus dados automaticamente
+                  Se quiser, conecte seu plano para importar dados automaticamente —
+                  dá para usar a Acolhe sem plano e vincular depois.
                 </p>
 
                 {loadingInsurances ? (
@@ -599,8 +710,28 @@ function RegisterPageContent() {
               </>
             )}
 
+            {/* LGPD — consentimento explícito */}
+            <div className="space-y-2 rounded-xl p-4 glass-subtle">
+              <label className="flex items-start gap-3 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 accent-[hsl(174_62%_24%)]"
+                  {...register('lgpdConsent')}
+                  disabled={isLoading}
+                />
+                <span>
+                  Li e aceito a política de privacidade. Autorizo o tratamento dos meus
+                  dados pessoais e de saúde para viabilizar o atendimento, conforme a{' '}
+                  <strong>Lei Geral de Proteção de Dados (LGPD)</strong>.
+                </span>
+              </label>
+              {errors.lgpdConsent && (
+                <p className="text-sm text-destructive">{errors.lgpdConsent.message}</p>
+              )}
+            </div>
+
             {error && (
-              <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+              <div className="p-3 rounded-xl glass-subtle bg-destructive/10 text-destructive text-sm">
                 {error}
               </div>
             )}
@@ -627,12 +758,11 @@ function RegisterPageContent() {
 
 function RegisterLoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+    <div className="min-h-screen flex items-center justify-center py-8">
       <Card className="w-full max-w-2xl mx-4">
         <CardHeader className="space-y-1 flex flex-col items-center">
-          <div className="flex items-center gap-2 mb-2">
-            <Activity className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold">MedGo</h1>
+          <div className="mb-2">
+            <Logo size={44} withWordmark />
           </div>
           <CardTitle className="text-xl sm:text-2xl">Criar Conta</CardTitle>
           <CardDescription>

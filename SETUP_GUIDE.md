@@ -1,6 +1,6 @@
-# Guia de Configuração - MedGo
+# Guia de Configuração - Acolhe
 
-Este guia irá ajudá-lo a configurar e executar o protótipo do MedGo.
+Este guia irá ajudá-lo a configurar e executar o protótipo do Acolhe.
 
 ## Pré-requisitos
 
@@ -41,7 +41,7 @@ pnpm db:migrate
 ### 4. Build dos Pacotes Compartilhados
 
 ```bash
-pnpm build --filter @medgo/shared-types
+pnpm build --filter @acolhe/shared-types
 ```
 
 ## Executando o Protótipo
@@ -77,9 +77,9 @@ pnpm dev:analytics
 - **Adminer (Gerenciador de DB)**: http://localhost:8080
   - Sistema: PostgreSQL
   - Servidor: postgres
-  - Usuário: medgo
-  - Senha: medgo123
-  - Database: medgo
+  - Usuário: acolhe
+  - Senha: acolhe123
+  - Database: acolhe
 
 ## Comandos Úteis
 
@@ -132,7 +132,7 @@ pnpm clean && pnpm install
 ## Estrutura do Projeto
 
 ```
-medgo/
+acolhe/
 ├── apps/
 │   ├── api-gateway/         # Backend principal (Express + Prisma)
 │   ├── analytics-service/   # Serviço de analytics e relatórios
@@ -202,7 +202,7 @@ pnpm --filter api-gateway prisma generate
 **Erro**: Testes unitários falhando
 
 **Solução**:
-1. Certifique-se de que o shared-types foi buildado: `pnpm build --filter @medgo/shared-types`
+1. Certifique-se de que o shared-types foi buildado: `pnpm build --filter @acolhe/shared-types`
 2. Rode os testes novamente: `pnpm test:api`
 
 ## Próximos Passos

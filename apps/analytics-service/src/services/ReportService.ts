@@ -121,7 +121,7 @@ export class ReportService {
     ])
 
     const reportData = {
-      title: 'Relatório Completo do Sistema MedGo',
+      title: 'Relatório Completo do Sistema Acolhe',
       generatedAt: format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }),
       period: {
         start: format(overview.period.start, 'dd/MM/yyyy', { locale: ptBR }),

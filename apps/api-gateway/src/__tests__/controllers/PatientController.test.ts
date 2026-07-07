@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { PatientController } from '../../controllers/PatientController'
 import { prisma } from '../../lib/prisma'
-import { BloodType, Gender } from '@medgo/shared-types'
+import { BloodType, Gender } from '@acolhe/shared-types'
 
 jest.mock('../../lib/prisma', () => ({
   prisma: {

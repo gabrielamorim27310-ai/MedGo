@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { PatientController } from '../controllers/PatientController'
 import { authenticate, authorize } from '../middlewares/auth'
-import { UserRole } from '@medgo/shared-types'
+import { UserRole } from '@acolhe/shared-types'
 
 const router = Router()
 const patientController = new PatientController()

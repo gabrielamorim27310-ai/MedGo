@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { useApi } from './useApi'
-import { Hospital } from '@medgo/shared-types'
+import { Hospital } from '@acolhe/shared-types'
 
 interface HospitalsResponse {
   data: Hospital[]

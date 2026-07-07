@@ -12,7 +12,12 @@ coverage/
 dist/
 build/
 .next/
+.next-prod/
 out/
+*.tsbuildinfo
+
+# Config local do Claude Code
+.claude/
 
 # Misc
 .DS_Store

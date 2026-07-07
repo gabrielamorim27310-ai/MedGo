@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,9 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Clock, Filter, Plus, Loader2, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
-import { QueuePriority, QueueStatus } from '@medgo/shared-types'
+import { Clock, Filter, Plus, Loader2, ChevronLeft, ChevronRight, RefreshCw, MapPin, Ticket } from 'lucide-react'
+import { QueuePriority, QueueStatus } from '@acolhe/shared-types'
 import { useQueues } from '@/hooks/useQueues'
+import { useAuth } from '@/contexts/AuthContext'
+import { api } from '@/lib/api'
 
 const priorityColors: Record<QueuePriority, 'destructive' | 'warning' | 'secondary' | 'default'> = {
   [QueuePriority.EMERGENCY]: 'destructive',
@@ -48,7 +50,198 @@ const statusLabels: Record<QueueStatus, string> = {
   [QueueStatus.NO_SHOW]: 'Não Compareceu',
 }
 
+interface MyQueueEntry {
+  id: string
+  hospitalId: string
+  priority: QueuePriority
+  status: QueueStatus
+  specialty: string
+  position?: number
+  ticketCode?: string
+  estimatedWaitTime?: number
+  checkInTime: string
+  endTime?: string
+  hospital?: { id: string; name: string; city?: string; state?: string }
+}
+
+/** Visão do paciente: senha ativa em destaque + histórico de filas. */
+function PatientQueuesView() {
+  const [active, setActive] = useState<MyQueueEntry[]>([])
+  const [history, setHistory] = useState<MyQueueEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchMyQueues = async () => {
+    try {
+      setError(null)
+      const response = await api.get('/queues/me')
+      setActive(response.data.active || [])
+      setHistory(response.data.history || [])
+    } catch {
+      setError('Não foi possível carregar suas filas')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchMyQueues()
+    // Posição muda em tempo real: atualiza a cada 30s
+    const interval = setInterval(fetchMyQueues, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Minhas Filas</h2>
+          <p className="text-muted-foreground">
+            Acompanhe sua senha em tempo real e o histórico de atendimentos
+          </p>
+        </div>
+        <Button className="gap-2" onClick={() => (window.location.href = '/dashboard/queues/new')}>
+          <Plus className="h-4 w-4" />
+          Entrar em uma fila
+        </Button>
+      </div>
+
+      {error && (
+        <div className="bg-destructive/10 text-destructive px-4 py-2 rounded-xl glass-subtle">{error}</div>
+      )}
+
+      {/* Senhas ativas */}
+      {active.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <Ticket className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">Você não está em nenhuma fila</h3>
+            <p className="text-muted-foreground">
+              Faça o check-in em um hospital para receber sua senha digital
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {active.map((entry) => (
+            <Card key={entry.id} className="overflow-hidden">
+              <div className="tint-teal px-6 py-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-primary-foreground/80">Sua senha</p>
+                  <p className="font-display text-4xl font-bold text-primary-foreground">
+                    {entry.ticketCode || '—'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs uppercase tracking-widest text-primary-foreground/80">Posição</p>
+                  <p className="font-display text-4xl font-bold text-primary-foreground">
+                    {entry.position ? `${entry.position}º` : '—'}
+                  </p>
+                </div>
+              </div>
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  {entry.hospital?.name}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  Espera estimada: {entry.estimatedWaitTime ?? 0} min · {entry.specialty}
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Badge variant={priorityColors[entry.priority] || 'default'}>
+                    {priorityLabels[entry.priority] || entry.priority}
+                  </Badge>
+                  <Badge variant={statusColors[entry.status] || 'default'}>
+                    {statusLabels[entry.status] || entry.status}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    Check-in às{' '}
+                    {new Date(entry.checkInTime).toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Histórico */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de Filas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {history.length === 0 ? (
+            <p className="text-muted-foreground text-center py-6">
+              Nenhum atendimento anterior por aqui ainda.
+            </p>
+          ) : (
+            <div className="overflow-x-auto -mx-6 px-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Hospital</TableHead>
+                    <TableHead>Especialidade</TableHead>
+                    <TableHead>Senha</TableHead>
+                    <TableHead>Prioridade</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {history.map((entry) => (
+                    <TableRow key={entry.id}>
+                      <TableCell>
+                        {new Date(entry.checkInTime).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="font-medium">{entry.hospital?.name || '-'}</TableCell>
+                      <TableCell>{entry.specialty}</TableCell>
+                      <TableCell>{entry.ticketCode || '-'}</TableCell>
+                      <TableCell>
+                        <Badge variant={priorityColors[entry.priority] || 'default'}>
+                          {priorityLabels[entry.priority] || entry.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusColors[entry.status] || 'default'}>
+                          {statusLabels[entry.status] || entry.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 export default function QueuesPage() {
+  const { user } = useAuth()
+
+  if (user?.role === 'PATIENT') {
+    return <PatientQueuesView />
+  }
+
+  return <StaffQueuesView />
+}
+
+function StaffQueuesView() {
   const { queues, pagination, loading, error, handlePageChange, refetch } = useQueues(1, 20)
   const [isRefreshing, setIsRefreshing] = useState(false)
 

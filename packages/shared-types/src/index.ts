@@ -5,3 +5,4 @@ export * from './queue';
 export * from './appointment';
 export * from './healthInsurance';
 export * from './notification';
+export * from './platform';

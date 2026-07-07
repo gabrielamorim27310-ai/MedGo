@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { AppointmentController } from '../../controllers/AppointmentController'
 import { prisma } from '../../lib/prisma'
-import { AppointmentStatus, AppointmentType } from '@medgo/shared-types'
+import { AppointmentStatus, AppointmentType } from '@acolhe/shared-types'
 
 jest.mock('../../lib/prisma', () => ({
   prisma: {

@@ -24,7 +24,9 @@ export interface QueueEntry {
   symptoms: string;
   estimatedWaitTime?: number;
   position?: number;
+  ticketCode?: string;
   checkInTime: Date;
+  calledAt?: Date;
   startTime?: Date;
   endTime?: Date;
   doctorId?: string;

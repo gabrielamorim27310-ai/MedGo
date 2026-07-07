@@ -1,11 +1,12 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
+/** Tabela sobre painel de vidro, com cabeçalho levemente mais denso. */
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  <div className="relative w-full overflow-auto rounded-2xl glass">
     <table
       ref={ref}
       className={cn('w-full caption-bottom text-sm', className)}
@@ -19,7 +20,14 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('[&_tr]:border-b', className)} {...props} />
+  <thead
+    ref={ref}
+    className={cn(
+      'bg-white/40 dark:bg-white/5 [&_tr]:border-b',
+      className
+    )}
+    {...props}
+  />
 ))
 TableHeader.displayName = 'TableHeader'
 
@@ -42,7 +50,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      'border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
+      'border-b border-border/40 transition-colors hover:bg-white/35 dark:hover:bg-white/5 data-[state=selected]:bg-white/50',
       className
     )}
     {...props}
@@ -57,7 +65,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      'h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+      'h-12 px-4 text-left align-middle text-xs font-bold uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0',
       className
     )}
     {...props}

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, ArrowLeft, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { Logo } from '@/components/branding/Logo'
 
 const resetPasswordSchema = z.object({
   newPassword: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
@@ -118,10 +119,9 @@ function ResetPasswordContent() {
   return (
     <Card className="w-full max-w-md mx-4">
       <CardHeader className="space-y-1 flex flex-col items-center">
-        <div className="flex items-center gap-2 mb-2">
-          <Activity className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">MedGo</h1>
-        </div>
+        <div className="mb-2">
+            <Logo size={44} withWordmark />
+          </div>
         <CardTitle className="text-2xl">Nova Senha</CardTitle>
         <CardDescription>
           Digite sua nova senha
@@ -197,7 +197,7 @@ function LoadingFallback() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center">
       <Suspense fallback={<LoadingFallback />}>
         <ResetPasswordContent />
       </Suspense>

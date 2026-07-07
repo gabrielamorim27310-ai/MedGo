@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { api } from '@/lib/api'
-import { HospitalType } from '@medgo/shared-types'
+import { HospitalType } from '@acolhe/shared-types'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 
 const SPECIALTIES_OPTIONS = [

@@ -1,4 +1,4 @@
-# 🚀 Status do Projeto MedGo - 2026-01-24
+# 🚀 Status do Projeto Acolhe - 2026-01-24
 
 ## 📊 Progresso Geral: **70%** Completo
 
@@ -288,7 +288,7 @@
 
 ## 🎉 Conclusão
 
-O projeto MedGo está em excelente estado de desenvolvimento!
+O projeto Acolhe está em excelente estado de desenvolvimento!
 
 **70% completo** com fundação sólida, arquitetura escalável e funcionalidades essenciais implementadas.
 

@@ -279,8 +279,8 @@ const operadorasData: Record<string, OperadoraData> = {
   'Unimed Goiânia': {
     cnpj: '01561592000171',
     phone: '08006461616',
-    email: 'atendimento@unimedgoiania.coop.br',
-    website: 'https://www.unimedgoiania.coop.br',
+    email: 'atendimento@uniacolheiania.coop.br',
+    website: 'https://www.uniacolheiania.coop.br',
     street: 'Avenida T-63',
     number: '1655',
     complement: '',
@@ -954,7 +954,7 @@ export default function NewHealthInsurancePage() {
               <Input
                 id="oauthRedirectUri"
                 {...register('oauthRedirectUri')}
-                placeholder="https://medgo-frontend.vercel.app/oauth/callback"
+                placeholder="https://acolhe-frontend.vercel.app/oauth/callback"
                 defaultValue={typeof window !== 'undefined' ? `${window.location.origin}/oauth/callback` : ''}
               />
               <p className="text-xs text-muted-foreground">

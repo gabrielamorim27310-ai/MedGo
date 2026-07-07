@@ -6,6 +6,7 @@ import hospitalRoutes from './hospital.routes'
 import queueRoutes from './queue.routes'
 import appointmentRoutes from './appointment.routes'
 import healthInsuranceRoutes from './healthInsurance.routes'
+import brandingRoutes from './branding.routes'
 
 const router = Router()
 
@@ -16,5 +17,6 @@ router.use('/hospitals', hospitalRoutes)
 router.use('/queues', queueRoutes)
 router.use('/appointments', appointmentRoutes)
 router.use('/health-insurances', healthInsuranceRoutes)
+router.use('/branding', brandingRoutes)
 
 export default router

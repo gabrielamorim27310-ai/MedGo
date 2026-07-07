@@ -24,12 +24,16 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  cpf: string;
-  phone: string;
+  /** Opcional para contas criadas via SSO Google */
+  cpf?: string;
+  phone?: string;
   role: UserRole;
   status: UserStatus;
   hospitalId?: string;
   healthInsuranceId?: string;
+  googleId?: string;
+  avatarUrl?: string;
+  emailVerifiedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,8 +61,15 @@ export interface LoginDTO {
   password: string;
 }
 
+/** Credencial (ID token) retornada pelo Google Identity Services */
+export interface GoogleLoginDTO {
+  credential: string;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;
   refreshToken: string;
+  /** true quando a conta foi criada e aguarda verificação de e-mail */
+  requiresEmailVerification?: boolean;
 }

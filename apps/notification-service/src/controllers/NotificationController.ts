@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { NotificationService } from '../services/NotificationService'
-import { CreateNotificationDTO, UpdateNotificationDTO } from '@medgo/shared-types'
+import { CreateNotificationDTO, UpdateNotificationDTO } from '@acolhe/shared-types'
 
 export class NotificationController {
   private notificationService: NotificationService

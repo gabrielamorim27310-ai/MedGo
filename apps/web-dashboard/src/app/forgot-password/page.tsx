@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, ArrowLeft, Mail } from 'lucide-react'
+import { Logo } from '@/components/branding/Logo'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -47,7 +48,7 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
@@ -72,12 +73,11 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="space-y-1 flex flex-col items-center">
-          <div className="flex items-center gap-2 mb-2">
-            <Activity className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">MedGo</h1>
+          <div className="mb-2">
+            <Logo size={44} withWordmark />
           </div>
           <CardTitle className="text-2xl">Recuperar Senha</CardTitle>
           <CardDescription>

@@ -25,8 +25,8 @@
     "strictPropertyInitialization": false,
     "baseUrl": ".",
     "paths": {
-      "@medgo/shared-types": ["packages/shared-types/src"],
-      "@medgo/utils": ["packages/utils/src"]
+      "@acolhe/shared-types": ["packages/shared-types/src"],
+      "@acolhe/utils": ["packages/utils/src"]
     }
   },
   "exclude": ["node_modules", "dist", "build", ".next"]

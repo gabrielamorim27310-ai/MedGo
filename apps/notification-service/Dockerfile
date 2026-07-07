@@ -15,9 +15,9 @@ COPY packages/shared-types/ ./packages/shared-types/
 COPY apps/notification-service/ ./apps/notification-service/
 
 # Build shared types first, then notification-service
-RUN pnpm --filter @medgo/shared-types build
+RUN pnpm --filter @acolhe/shared-types build
 RUN cd apps/notification-service && npx prisma generate || true
-RUN pnpm --filter @medgo/notification-service build
+RUN pnpm --filter @acolhe/notification-service build
 
 WORKDIR /app/apps/notification-service
 

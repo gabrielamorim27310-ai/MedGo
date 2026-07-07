@@ -1,4 +1,4 @@
-# MedGo - Progresso do Desenvolvimento
+# Acolhe - Progresso do Desenvolvimento
 
 ## ✅ Implementações Concluídas
 
@@ -320,7 +320,7 @@ pnpm dev
 
 ## 🎯 Conclusão
 
-O projeto MedGo está com uma base sólida e funcional:
+O projeto Acolhe está com uma base sólida e funcional:
 - ✅ **5 serviços funcionais** (Dashboard, API, Queue, Notification, Appointments)
 - ✅ **Arquitetura de microserviços** escalável e modular
 - ✅ **Comunicação em tempo real** via WebSocket

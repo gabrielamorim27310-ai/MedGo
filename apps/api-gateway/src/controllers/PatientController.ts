@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { AppError } from '../middlewares/errorHandler'
 import { prisma } from '../lib/prisma'
-import { CreatePatientDTO, UpdatePatientDTO } from '@medgo/shared-types'
+import { CreatePatientDTO, UpdatePatientDTO } from '@acolhe/shared-types'
 
 export class PatientController {
   async list(req: Request, res: Response, next: NextFunction) {

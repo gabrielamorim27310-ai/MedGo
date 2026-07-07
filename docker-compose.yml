@@ -3,26 +3,26 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: medgo-postgres
+    container_name: acolhe-postgres
     restart: always
     environment:
-      POSTGRES_USER: medgo
-      POSTGRES_PASSWORD: medgo
-      POSTGRES_DB: medgo
+      POSTGRES_USER: acolhe
+      POSTGRES_PASSWORD: acolhe
+      POSTGRES_DB: acolhe
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U medgo"]
+      test: ["CMD-SHELL", "pg_isready -U acolhe"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: medgo-redis
+    container_name: acolhe-redis
     restart: always
     ports:
       - "6379:6379"
@@ -36,7 +36,7 @@ services:
 
   adminer:
     image: adminer:latest
-    container_name: medgo-adminer
+    container_name: acolhe-adminer
     restart: always
     ports:
       - "8080:8080"

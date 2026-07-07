@@ -56,7 +56,7 @@ export class HealthInsuranceController {
       if (!healthInsurance.oauthEnabled || !healthInsurance.oauthAuthUrl) {
         // Se não tem OAuth, retorna o website para redirect simples
         if (healthInsurance.website) {
-          return res.json({
+          res.json({
             type: 'redirect',
             url: healthInsurance.website,
             healthInsurance: {
@@ -64,6 +64,7 @@ export class HealthInsuranceController {
               name: healthInsurance.name,
             },
           })
+          return
         }
         throw new AppError('Plano de saúde não possui integração OAuth configurada', 400)
       }
@@ -156,7 +157,7 @@ export class HealthInsuranceController {
         throw new AppError('Erro ao obter token do plano de saúde', 500)
       }
 
-      const tokenData = await tokenResponse.json()
+      const tokenData = (await tokenResponse.json()) as { access_token?: string }
 
       // Obter informações do usuário
       let userInfo: any = {}

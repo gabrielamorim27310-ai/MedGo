@@ -5,6 +5,7 @@ import morgan from 'morgan'
 import dotenv from 'dotenv'
 import { errorHandler } from './middlewares/errorHandler'
 import { notFound } from './middlewares/notFound'
+import { auditTrail } from './middlewares/audit'
 import routes from './routes'
 
 dotenv.config()
@@ -26,6 +27,9 @@ app.use(express.urlencoded({ extended: true }))
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'api-gateway', timestamp: new Date() })
 })
+
+// Trilha de auditoria LGPD sobre recursos com dados pessoais
+app.use('/api', auditTrail)
 
 // Routes
 app.use('/api', routes)

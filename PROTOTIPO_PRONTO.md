@@ -1,4 +1,4 @@
-# Protótipo MedGo - PRONTO PARA USO
+# Protótipo Acolhe - PRONTO PARA USO
 
 ## Testes - 100% Passando
 
@@ -37,9 +37,9 @@ pnpm dev:analytics
 - Web Dashboard: http://localhost:3000
 - Analytics Service: http://localhost:3004
 - Adminer (DB): http://localhost:8080
-  - User: medgo
-  - Password: medgo123
-  - Database: medgo
+  - User: acolhe
+  - Password: acolhe123
+  - Database: acolhe
 
 ## Status
 

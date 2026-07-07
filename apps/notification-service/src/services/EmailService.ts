@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import { Notification } from '@medgo/shared-types'
+import { Notification } from '@acolhe/shared-types'
 
 export class EmailService {
   private transporter: nodemailer.Transporter
@@ -81,7 +81,7 @@ export class EmailService {
         </head>
         <body>
           <div class="header">
-            <h1>MedGo</h1>
+            <h1>Acolhe</h1>
           </div>
           <div class="content">
             <h2>${notification.title}</h2>
@@ -91,8 +91,8 @@ export class EmailService {
             ` : ''}
           </div>
           <div class="footer">
-            <p>Este é um email automático do MedGo. Por favor, não responda.</p>
-            <p>&copy; ${new Date().getFullYear()} MedGo. Todos os direitos reservados.</p>
+            <p>Este é um email automático do Acolhe. Por favor, não responda.</p>
+            <p>&copy; ${new Date().getFullYear()} Acolhe. Todos os direitos reservados.</p>
           </div>
         </body>
       </html>

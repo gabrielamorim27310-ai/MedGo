@@ -11,6 +11,7 @@ enum UserRole {
   PATIENT
   DOCTOR
   NURSE
+  RECEPTIONIST
   HOSPITAL_ADMIN
   SYSTEM_ADMIN
   HEALTH_INSURANCE_ADMIN
@@ -121,12 +122,28 @@ model User {
   email              String     @unique
   password           String
   name               String
-  cpf                String     @unique
-  phone              String
+  // Opcionais para contas criadas via SSO (completadas depois no perfil)
+  cpf                String?    @unique
+  phone              String?
   role               UserRole
   status             UserStatus @default(ACTIVE)
   hospitalId         String?
   healthInsuranceId  String?
+
+  // SSO Google
+  googleId           String?    @unique
+  avatarUrl          String?
+
+  // Registro profissional (CRM para médicos, COREN para enfermeiros)
+  professionalLicense String?
+
+  // Verificação de e-mail (enviada via Resend)
+  emailVerifiedAt    DateTime?
+
+  // LGPD
+  lgpdConsentAt      DateTime?
+  lgpdConsentVersion String?
+
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
@@ -134,10 +151,32 @@ model User {
   healthInsurance    HealthInsurance?    @relation(fields: [healthInsuranceId], references: [id])
   patient            Patient?
   notifications      Notification[]
+  verificationTokens VerificationToken[]
 
   @@index([email])
   @@index([cpf])
   @@map("users")
+}
+
+enum VerificationTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model VerificationToken {
+  id        String                @id @default(uuid())
+  token     String                @unique
+  userId    String
+  type      VerificationTokenType
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime              @default(now())
+
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("verification_tokens")
 }
 
 model Patient {
@@ -257,12 +296,18 @@ model QueueEntry {
   symptoms           String
   estimatedWaitTime  Int?
   position           Int?
+  ticketCode         String?
   checkInTime        DateTime       @default(now())
+  calledAt           DateTime?
   startTime          DateTime?
   endTime            DateTime?
   doctorId           String?
   roomNumber         String?
   notes              String?
+
+  // Resultado da verificação de elegibilidade junto à operadora no check-in
+  eligibility        Json?
+
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
@@ -270,6 +315,7 @@ model QueueEntry {
   patient            Patient        @relation(fields: [patientId], references: [id])
 
   @@index([hospitalId, status])
+  @@index([hospitalId, endTime])
   @@index([patientId])
   @@index([checkInTime])
   @@map("queue_entries")
@@ -292,6 +338,11 @@ model Appointment {
   prescription    String?
   notes           String?
   queueEntryId    String?
+
+  // Prontuário eletrônico integrado (padrão TISS)
+  cid10           String?
+  tussProcedures  Json?
+  tissGuideNumber String?   @unique
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
@@ -379,6 +430,45 @@ model HealthInsurancePlan {
   @@index([healthInsuranceId])
   @@index([code])
   @@map("health_insurance_plans")
+}
+
+// Configuração white-label por tenant (hospital ou operadora) — modelo B2B
+model BrandingConfig {
+  id                String   @id @default(uuid())
+  slug              String   @unique
+  displayName       String
+  tagline           String?
+  logoUrl           String?
+  primaryColor      String   @default("#16736B")
+  accentColor       String   @default("#C98A2D")
+  backgroundColor   String   @default("#F4EFE6")
+  hospitalId        String?  @unique
+  healthInsuranceId String?  @unique
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([slug])
+  @@map("branding_configs")
+}
+
+// Trilha de auditoria — conformidade LGPD (art. 37: registro das operações)
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorRole  String?
+  action     String
+  resource   String
+  resourceId String?
+  ip         String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
 
 model Notification {

@@ -19,11 +19,12 @@ import {
   Video,
 } from 'lucide-react'
 import { useAppointments, type AppointmentWithRelations } from '@/hooks/useAppointments'
-import { AppointmentStatus, AppointmentType } from '@medgo/shared-types'
+import { AppointmentStatus, AppointmentType } from '@acolhe/shared-types'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { LoadingPage } from '@/components/ui/loading'
 import { ErrorMessage } from '@/components/ui/error'
+import { useAuth } from '@/contexts/AuthContext'
 
 const statusColors: Record<AppointmentStatus, string> = {
   [AppointmentStatus.SCHEDULED]: 'bg-blue-500',
@@ -64,14 +65,23 @@ export default function AppointmentsPage() {
     getStatistics,
   } = useAppointments()
 
+  const { user } = useAuth()
+  const isPatient = user?.role === 'PATIENT'
+
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus | ''>('')
   const [stats, setStats] = useState<any>(null)
 
   useEffect(() => {
     fetchAppointments({ page: 1, limit: 20 })
-    loadStatistics()
   }, [])
+
+  // Estatísticas administrativas: fora do alcance (403) de pacientes
+  useEffect(() => {
+    if (user && user.role !== 'PATIENT') {
+      loadStatistics()
+    }
+  }, [user])
 
   const loadStatistics = async () => {
     try {
@@ -94,7 +104,7 @@ export default function AppointmentsPage() {
     try {
       await confirmAppointment(id)
       fetchAppointments({ page: pagination.page, limit: pagination.limit })
-      loadStatistics()
+      if (!isPatient) loadStatistics()
     } catch (err) {
       console.error('Error confirming appointment:', err)
     }
@@ -104,7 +114,7 @@ export default function AppointmentsPage() {
     try {
       await checkInAppointment(id)
       fetchAppointments({ page: pagination.page, limit: pagination.limit })
-      loadStatistics()
+      if (!isPatient) loadStatistics()
     } catch (err) {
       console.error('Error checking in:', err)
     }
@@ -117,7 +127,7 @@ export default function AppointmentsPage() {
     try {
       await cancelAppointment(id, reason)
       fetchAppointments({ page: pagination.page, limit: pagination.limit })
-      loadStatistics()
+      if (!isPatient) loadStatistics()
     } catch (err) {
       console.error('Error cancelling appointment:', err)
     }

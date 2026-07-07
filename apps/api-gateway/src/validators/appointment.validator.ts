@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { AppointmentType, AppointmentStatus } from '@medgo/shared-types'
+import { AppointmentType, AppointmentStatus } from '@acolhe/shared-types'
 
 export const createAppointmentSchema = z.object({
   body: z.object({
@@ -42,6 +42,22 @@ export const rescheduleAppointmentSchema = z.object({
 export const completeAppointmentSchema = z.object({
   body: z.object({
     notes: z.string().optional(),
+    diagnosis: z.string().optional(),
+    prescription: z.string().optional(),
+    // Prontuário eletrônico integrado (padrão TISS)
+    cid10: z
+      .string()
+      .regex(/^[A-Z][0-9]{2}(\.[0-9]{1,2})?$/, 'CID-10 inválido (ex.: J45.0)')
+      .optional(),
+    tussProcedures: z
+      .array(
+        z.object({
+          code: z.string().min(3, 'Código TUSS inválido'),
+          description: z.string().min(3, 'Descrição do procedimento obrigatória'),
+          quantity: z.number().int().min(1).default(1),
+        })
+      )
+      .optional(),
   }),
 })
 

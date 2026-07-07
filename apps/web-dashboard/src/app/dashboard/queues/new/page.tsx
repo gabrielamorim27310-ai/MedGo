@@ -9,9 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, MapPin } from 'lucide-react'
 import { api } from '@/lib/api'
-import { QueuePriority } from '@medgo/shared-types'
+import { QueuePriority } from '@acolhe/shared-types'
+import { HospitalMap } from '@/components/maps/HospitalMap'
+import { useAuth } from '@/contexts/AuthContext'
 
 const queueEntrySchema = z.object({
   hospitalId: z.string().min(1, 'Selecione um hospital'),
@@ -26,6 +28,12 @@ type QueueEntryFormData = z.infer<typeof queueEntrySchema>
 interface Hospital {
   id: string
   name: string
+  latitude?: number | null
+  longitude?: number | null
+  street?: string
+  number?: string
+  neighborhood?: string
+  emergency24h?: boolean
 }
 
 interface Patient {
@@ -60,6 +68,8 @@ const specialties = [
 
 export default function NewQueueEntryPage() {
   const router = useRouter()
+  const { user } = useAuth()
+  const isPatient = user?.role === 'PATIENT'
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hospitals, setHospitals] = useState<Hospital[]>([])
@@ -69,6 +79,8 @@ export default function NewQueueEntryPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<QueueEntryFormData>({
     resolver: zodResolver(queueEntrySchema),
@@ -77,23 +89,39 @@ export default function NewQueueEntryPage() {
     },
   })
 
+  const selectedHospitalId = watch('hospitalId')
+
   useEffect(() => {
     const fetchData = async () => {
+      // Buscas independentes: a lista de pacientes é restrita à equipe,
+      // e uma falha nela não pode derrubar a lista de hospitais.
       try {
-        const [hospitalsRes, patientsRes] = await Promise.all([
-          api.get('/hospitals?limit=100'),
-          api.get('/patients?limit=100'),
-        ])
+        const hospitalsRes = await api.get('/hospitals?limit=100')
         setHospitals(hospitalsRes.data?.data || [])
-        setPatients(patientsRes.data?.data || [])
       } catch (err) {
-        console.error('Error fetching data:', err)
-      } finally {
-        setLoading(false)
+        console.error('Error fetching hospitals:', err)
       }
+
+      if (!isPatient) {
+        try {
+          const patientsRes = await api.get('/patients?limit=100')
+          setPatients(patientsRes.data?.data || [])
+        } catch (err) {
+          console.error('Error fetching patients:', err)
+        }
+      }
+
+      setLoading(false)
     }
     fetchData()
-  }, [])
+  }, [isPatient])
+
+  // Paciente entra na fila em nome próprio — o backend resolve o cadastro
+  useEffect(() => {
+    if (isPatient) {
+      setValue('patientId', 'auto')
+    }
+  }, [isPatient, setValue])
 
   const onSubmit = async (data: QueueEntryFormData) => {
     setIsSubmitting(true)
@@ -160,23 +188,49 @@ export default function NewQueueEntryPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="patientId">Paciente *</Label>
-                <select
-                  id="patientId"
-                  {...register('patientId')}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                >
-                  <option value="">Selecione um paciente...</option>
-                  {patients.map((patient) => (
-                    <option key={patient.id} value={patient.id}>
-                      {patient.user?.name || `Paciente #${patient.id.slice(-6)}`}
-                    </option>
-                  ))}
-                </select>
-                {errors.patientId && (
-                  <p className="text-sm text-destructive">{errors.patientId.message}</p>
-                )}
+              {isPatient ? (
+                <div className="space-y-2">
+                  <Label>Paciente</Label>
+                  <div className="flex h-10 w-full items-center rounded-xl glass-subtle px-3 text-sm text-muted-foreground">
+                    {user?.name} (você)
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="patientId">Paciente *</Label>
+                  <select
+                    id="patientId"
+                    {...register('patientId')}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                  >
+                    <option value="">Selecione um paciente...</option>
+                    {patients.map((patient) => (
+                      <option key={patient.id} value={patient.id}>
+                        {patient.user?.name || `Paciente #${patient.id.slice(-6)}`}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.patientId && (
+                    <p className="text-sm text-destructive">{errors.patientId.message}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Mapa: clique no marcador para escolher a unidade,
+                  com a situação da fila de cada uma em tempo real */}
+              <div className="md:col-span-2 space-y-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  Clique em uma unidade no mapa para selecioná-la — a cor indica a
+                  situação da fila agora
+                </div>
+                <HospitalMap
+                  hospitals={hospitals}
+                  selectedHospitalId={selectedHospitalId}
+                  onSelectHospital={(id) =>
+                    setValue('hospitalId', id, { shouldValidate: true })
+                  }
+                />
               </div>
             </CardContent>
           </Card>

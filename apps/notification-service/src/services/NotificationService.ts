@@ -5,7 +5,7 @@ import {
   NotificationStatus,
   CreateNotificationDTO,
   UpdateNotificationDTO,
-} from '@medgo/shared-types'
+} from '@acolhe/shared-types'
 import { EmailService } from './EmailService'
 import { notificationQueue } from '../queues/notificationQueue'
 

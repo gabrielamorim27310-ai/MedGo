@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
+/** Aviso em painel de vidro, com tinta na borda quando destrutivo. */
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & { variant?: 'default' | 'destructive' }
@@ -9,10 +10,10 @@ const Alert = React.forwardRef<
     ref={ref}
     role="alert"
     className={cn(
-      'relative w-full rounded-lg border p-4',
+      'relative w-full rounded-2xl p-4 glass',
       {
-        'bg-background text-foreground': variant === 'default',
-        'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive':
+        'text-foreground': variant === 'default',
+        'border-destructive/40 bg-destructive/10 text-destructive [&>svg]:text-destructive':
           variant === 'destructive',
       },
       className
@@ -28,7 +29,7 @@ const AlertTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h5
     ref={ref}
-    className={cn('mb-1 font-medium leading-none tracking-tight', className)}
+    className={cn('mb-1 font-display font-semibold leading-none tracking-tight', className)}
     {...props}
   />
 ))

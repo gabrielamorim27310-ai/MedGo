@@ -1,13 +1,15 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Sora } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
+const sora = Sora({ subsets: ['latin'], variable: '--font-display' })
 
 export const metadata: Metadata = {
-  title: 'MedGo - Dashboard',
-  description: 'Sistema de gerenciamento hospitalar e filas de atendimento',
+  title: 'Acolhe — Sua vez chega até você',
+  description:
+    'Fila virtual hospitalar: check-in pelo app, senha digital, tempo de espera em tempo real e recomendação de unidades próximas.',
 }
 
 export default function RootLayout({
@@ -17,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${sora.variable} font-sans`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

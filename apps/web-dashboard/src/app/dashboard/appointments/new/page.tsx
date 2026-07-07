@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, Loader2, Clock } from 'lucide-react'
 import { api } from '@/lib/api'
-import { AppointmentType } from '@medgo/shared-types'
+import { AppointmentType } from '@acolhe/shared-types'
 
 const specialties = [
   'Cardiologia', 'Dermatologia', 'Endocrinologia', 'Gastroenterologia',

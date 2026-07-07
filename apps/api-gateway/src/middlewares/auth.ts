@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { AppError } from './errorHandler'
-import { User, UserRole } from '@medgo/shared-types'
+import { User, UserRole } from '@acolhe/shared-types'
 
 export interface AuthRequest extends Request {
   user?: User

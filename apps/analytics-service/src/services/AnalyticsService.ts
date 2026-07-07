@@ -5,7 +5,7 @@ import {
   AppointmentType,
   QueueStatus,
   QueuePriority,
-} from '@medgo/shared-types'
+} from '@acolhe/shared-types'
 import { subDays, startOfDay, endOfDay, format } from 'date-fns'
 
 export class AnalyticsService {

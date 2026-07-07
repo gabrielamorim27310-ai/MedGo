@@ -15,9 +15,9 @@ COPY packages/shared-types/ ./packages/shared-types/
 COPY apps/queue-service/ ./apps/queue-service/
 
 # Build shared types first, then queue-service
-RUN pnpm --filter @medgo/shared-types build
+RUN pnpm --filter @acolhe/shared-types build
 RUN cd apps/queue-service && npx prisma generate || true
-RUN pnpm --filter @medgo/queue-service build
+RUN pnpm --filter @acolhe/queue-service build
 
 WORKDIR /app/apps/queue-service
 

@@ -20,7 +20,7 @@
     "sourceMap": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@medgo/shared-types": ["../../packages/shared-types/src"]
+      "@acolhe/shared-types": ["../../packages/shared-types/src"]
     }
   },
   "include": ["src/**/*"],

@@ -1,11 +1,11 @@
 {
-  "name": "medgo",
+  "name": "acolhe",
   "version": "1.0.0",
   "private": true,
-  "description": "MedGo - Conectando pacientes, hospitais e planos de saúde",
+  "description": "Acolhe - Conectando pacientes, hospitais e planos de saúde",
   "repository": {
     "type": "git",
-    "url": "https://github.com/seu-usuario/medgo"
+    "url": "https://github.com/seu-usuario/acolhe"
   },
   "keywords": [
     "healthcare",
@@ -14,7 +14,7 @@
     "telemedicine",
     "health-insurance"
   ],
-  "author": "MedGo Team",
+  "author": "Acolhe Team",
   "license": "MIT",
   "workspaces": [
     "apps/*",
@@ -39,7 +39,7 @@
     "db:migrate": "pnpm --filter api-gateway prisma migrate dev",
     "db:studio": "pnpm --filter api-gateway prisma studio",
     "db:seed": "pnpm --filter api-gateway prisma db seed",
-    "setup": "pnpm install && pnpm build --filter @medgo/shared-types && pnpm db:migrate"
+    "setup": "pnpm install && pnpm build --filter @acolhe/shared-types && pnpm db:migrate"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

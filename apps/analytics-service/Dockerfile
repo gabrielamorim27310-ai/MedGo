@@ -15,9 +15,9 @@ COPY packages/shared-types/ ./packages/shared-types/
 COPY apps/analytics-service/ ./apps/analytics-service/
 
 # Build shared types first, then analytics-service
-RUN pnpm --filter @medgo/shared-types build
+RUN pnpm --filter @acolhe/shared-types build
 RUN cd apps/analytics-service && npx prisma generate || true
-RUN pnpm --filter @medgo/analytics-service build
+RUN pnpm --filter @acolhe/analytics-service build
 
 WORKDIR /app/apps/analytics-service
 

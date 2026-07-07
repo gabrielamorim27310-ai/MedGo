@@ -10,7 +10,7 @@ import {
   completeAppointmentSchema,
   getAvailableSlotsSchema,
 } from '../validators/appointment.validator'
-import { UserRole } from '@medgo/shared-types'
+import { UserRole } from '@acolhe/shared-types'
 
 const router = Router()
 const appointmentController = new AppointmentController()
@@ -119,6 +119,18 @@ router.post(
   authorize([UserRole.SYSTEM_ADMIN, UserRole.DOCTOR]),
   validate(completeAppointmentSchema),
   appointmentController.complete
+)
+
+router.get(
+  '/:id/tiss',
+  authenticate,
+  authorize([
+    UserRole.SYSTEM_ADMIN,
+    UserRole.HOSPITAL_ADMIN,
+    UserRole.DOCTOR,
+    UserRole.HEALTH_INSURANCE_ADMIN,
+  ]),
+  appointmentController.getTissGuide
 )
 
 export default router

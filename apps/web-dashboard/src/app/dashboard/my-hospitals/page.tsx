@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import Link from 'next/link'
+import { HospitalMap } from '@/components/maps/HospitalMap'
 
 interface Hospital {
   id: string
@@ -31,12 +32,15 @@ interface Hospital {
   city: string
   state: string
   zipCode: string
+  latitude?: number | null
+  longitude?: number | null
   phone: string
   email: string
   website?: string
   specialties: string[]
   emergency24h: boolean
   acceptedHealthInsurances: string[]
+  covered?: boolean
 }
 
 interface PatientHealthInsurance {
@@ -81,31 +85,29 @@ export default function MyHospitalsPage() {
           setHasNoInsurance(true)
         }
 
-        // Buscar todos os hospitais
+        // Buscar todos os hospitais — plano de saúde não é pré-requisito
+        // para ver e usar as unidades; ele apenas destaca os conveniados.
         const hospitalsResponse = await api.get('/hospitals?limit=100')
-        const allHospitals = hospitalsResponse.data.data || []
+        const allHospitals: Hospital[] = hospitalsResponse.data.data || []
 
-        // Filtrar hospitais que aceitam o plano do paciente
-        if (insuranceId || insuranceName) {
-          const coveredHospitals = allHospitals.filter((hospital: Hospital) => {
-            if (!hospital.acceptedHealthInsurances) return false
-            return hospital.acceptedHealthInsurances.some(
-              (ins: string) =>
-                ins === insuranceId ||
-                ins === insuranceName ||
-                ins.toLowerCase().includes((insuranceName || '').toLowerCase())
-            )
-          })
-          setHospitals(coveredHospitals)
-          setFilteredHospitals(coveredHospitals)
-        } else {
-          // Se não tem plano, mostrar todos os hospitais públicos
-          const publicHospitals = allHospitals.filter(
-            (h: Hospital) => h.type === 'PUBLIC'
-          )
-          setHospitals(publicHospitals)
-          setFilteredHospitals(publicHospitals)
-        }
+        const withCoverage = allHospitals.map((hospital) => ({
+          ...hospital,
+          covered:
+            !insuranceId && !insuranceName
+              ? undefined
+              : hospital.acceptedHealthInsurances?.some(
+                  (ins: string) =>
+                    ins === insuranceId ||
+                    ins === insuranceName ||
+                    ins.toLowerCase().includes((insuranceName || '').toLowerCase())
+                ) ?? false,
+        }))
+
+        // Conveniados primeiro, quando há plano
+        withCoverage.sort((a, b) => Number(b.covered ?? 0) - Number(a.covered ?? 0))
+
+        setHospitals(withCoverage)
+        setFilteredHospitals(withCoverage)
       } catch (err) {
         setError('Erro ao carregar hospitais')
       } finally {
@@ -166,8 +168,8 @@ export default function MyHospitalsPage() {
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Meus Hospitais</h2>
         <p className="text-muted-foreground">
           {patientInsurance?.healthInsurance
-            ? `Hospitais cobertos pelo seu plano ${patientInsurance.healthInsurance.name}`
-            : 'Hospitais públicos disponíveis'}
+            ? `Unidades disponíveis — conveniadas ao plano ${patientInsurance.healthInsurance.name} em destaque`
+            : 'Unidades disponíveis na rede'}
         </p>
       </div>
 
@@ -183,11 +185,12 @@ export default function MyHospitalsPage() {
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-amber-500" />
               <div>
-                <p className="font-medium">Você ainda não cadastrou seu plano de saúde</p>
+                <p className="font-medium">Você ainda não vinculou um plano de saúde (opcional)</p>
                 <p className="text-sm text-muted-foreground">
-                  Cadastre seu plano para ver todos os hospitais cobertos.{' '}
+                  Dá para usar qualquer unidade sem plano. Se vincular, destacamos os
+                  hospitais conveniados e agilizamos a autorização.{' '}
                   <Link href="/dashboard/my-health-insurance" className="text-primary hover:underline">
-                    Cadastrar agora
+                    Vincular plano
                   </Link>
                 </p>
               </div>
@@ -231,6 +234,9 @@ export default function MyHospitalsPage() {
         />
       </div>
 
+      {/* Mapa das unidades */}
+      <HospitalMap hospitals={filteredHospitals} />
+
       {/* Lista de hospitais */}
       {filteredHospitals.length === 0 ? (
         <Card>
@@ -248,11 +254,16 @@ export default function MyHospitalsPage() {
           {filteredHospitals.map((hospital) => (
             <Card key={hospital.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-lg">{hospital.name}</CardTitle>
-                  <Badge className={getTypeColor(hospital.type)}>
-                    {getTypeLabel(hospital.type)}
-                  </Badge>
+                  <div className="flex gap-1 shrink-0">
+                    {hospital.covered === true && (
+                      <Badge variant="success" className="text-xs">Conveniado</Badge>
+                    )}
+                    <Badge className={getTypeColor(hospital.type)}>
+                      {getTypeLabel(hospital.type)}
+                    </Badge>
+                  </div>
                 </div>
                 <CardDescription className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" />

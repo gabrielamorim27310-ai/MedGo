@@ -1,4 +1,4 @@
-# Guia de Configuração - MedGo
+# Guia de Configuração - Acolhe
 
 ## Índice
 1. [Pré-requisitos](#pré-requisitos)
@@ -36,8 +36,8 @@ Antes de começar, certifique-se de ter instalado:
 ### 1. Clone o Repositório
 
 ```bash
-git clone https://github.com/seu-usuario/medgo.git
-cd medgo
+git clone https://github.com/seu-usuario/acolhe.git
+cd acolhe
 ```
 
 ### 2. Instale as Dependências
@@ -70,9 +70,9 @@ docker-compose down -v
 
 Serviços disponíveis:
 - PostgreSQL: `localhost:5432`
-  - Usuário: `medgo`
-  - Senha: `medgo123`
-  - Database: `medgo`
+  - Usuário: `acolhe`
+  - Senha: `acolhe123`
+  - Database: `acolhe`
 - Redis: `localhost:6379`
 - Adminer (interface web para PostgreSQL): `http://localhost:8080`
 
@@ -82,7 +82,7 @@ Se preferir não usar Docker:
 
 1. **PostgreSQL:**
    - Instale PostgreSQL
-   - Crie um banco de dados: `CREATE DATABASE medgo;`
+   - Crie um banco de dados: `CREATE DATABASE acolhe;`
    - Crie um usuário (opcional)
 
 2. **Redis:**
@@ -105,7 +105,7 @@ PORT=3001
 NODE_ENV=development
 
 # Database
-DATABASE_URL="postgresql://medgo:medgo123@localhost:5432/medgo?schema=public"
+DATABASE_URL="postgresql://acolhe:acolhe123@localhost:5432/acolhe?schema=public"
 
 # JWT
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
@@ -133,7 +133,7 @@ PORT=3002
 NODE_ENV=development
 
 # Database
-DATABASE_URL="postgresql://medgo:medgo123@localhost:5432/medgo?schema=public"
+DATABASE_URL="postgresql://acolhe:acolhe123@localhost:5432/acolhe?schema=public"
 
 # Redis
 REDIS_URL="redis://localhost:6379"
@@ -246,7 +246,7 @@ curl http://localhost:3001/health
 curl -X POST http://localhost:3001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@medgo.com",
+    "email": "admin@acolhe.com",
     "password": "admin123",
     "name": "Administrador",
     "cpf": "12345678901",
@@ -258,7 +258,7 @@ curl -X POST http://localhost:3001/api/auth/register \
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@medgo.com",
+    "email": "admin@acolhe.com",
     "password": "admin123"
   }'
 ```

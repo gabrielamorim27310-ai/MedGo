@@ -5,22 +5,23 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'
 }
 
+/** Pílula de vidro tingido — cor no texto, translucidez no fundo. */
 function Badge({ className, variant = 'default', ...props }: BadgeProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold backdrop-blur-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
         {
-          'border-transparent bg-primary text-primary-foreground hover:bg-primary/80':
+          'border-primary/30 bg-primary/15 text-primary dark:text-[hsl(172_60%_70%)]':
             variant === 'default',
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80':
+          'border-border/60 bg-white/40 text-secondary-foreground dark:bg-white/10':
             variant === 'secondary',
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80':
+          'border-destructive/30 bg-destructive/15 text-destructive':
             variant === 'destructive',
-          'text-foreground': variant === 'outline',
-          'border-transparent bg-green-500 text-white hover:bg-green-600':
+          'border-border/70 bg-transparent text-foreground': variant === 'outline',
+          'border-success/30 bg-success/15 text-success dark:text-[hsl(152_50%_65%)]':
             variant === 'success',
-          'border-transparent bg-yellow-500 text-white hover:bg-yellow-600':
+          'border-brass/30 bg-brass/15 text-[hsl(32_75%_38%)] dark:text-[hsl(40_85%_65%)]':
             variant === 'warning',
         },
         className

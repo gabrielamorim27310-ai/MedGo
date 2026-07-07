@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { useApi } from './useApi'
-import { QueueEntry, QueueStatus, QueuePriority } from '@medgo/shared-types'
+import { QueueEntry, QueueStatus, QueuePriority } from '@acolhe/shared-types'
 
 interface QueuesResponse {
   data: QueueEntry[]

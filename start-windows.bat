@@ -1,6 +1,6 @@
 @echo off
 echo ====================================
-echo    MedGo - Sistema de Saude
+echo    Acolhe - Sistema de Saude
 echo ====================================
 echo.
 
@@ -46,7 +46,7 @@ if %errorlevel% neq 0 (
 echo ✅ Migrations concluidas
 
 echo.
-echo [5/5] MedGo esta pronto!
+echo [5/5] Acolhe esta pronto!
 echo.
 echo ====================================
 echo    Proximos Passos

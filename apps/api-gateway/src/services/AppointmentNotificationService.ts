@@ -1,4 +1,4 @@
-import { NotificationType, NotificationChannel } from '@medgo/shared-types'
+import { NotificationType, NotificationChannel } from '@acolhe/shared-types'
 import axios from 'axios'
 
 const NOTIFICATION_SERVICE_URL =
