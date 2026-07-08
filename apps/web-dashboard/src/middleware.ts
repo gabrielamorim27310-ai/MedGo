@@ -22,5 +22,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  // Exclui rotas de assets/ícones — sem isso o navegador recebe a página
+  // de login em HTML ao pedir icon.svg/apple-icon.png e o favicon quebra
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png).*)'],
 }
