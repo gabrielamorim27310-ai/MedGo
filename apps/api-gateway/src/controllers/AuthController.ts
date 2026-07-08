@@ -245,12 +245,18 @@ export class AuthController {
         picture?: string
       }
 
-      const clientId = process.env.GOOGLE_CLIENT_ID
-      if (!clientId) {
+      // Aceita múltiplos client IDs separados por vírgula (ex.: um para
+      // localhost e outro para o deploy na Vercel)
+      const allowedClientIds = (process.env.GOOGLE_CLIENT_ID || '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+
+      if (allowedClientIds.length === 0) {
         throw new AppError('SSO Google não configurado no servidor (GOOGLE_CLIENT_ID)', 500)
       }
 
-      if (payload.aud !== clientId) {
+      if (!payload.aud || !allowedClientIds.includes(payload.aud)) {
         throw new AppError('Credencial Google não pertence a esta aplicação', 401)
       }
 
