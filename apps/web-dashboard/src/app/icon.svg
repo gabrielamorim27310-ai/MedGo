@@ -1,0 +1,28 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Acolhe — senha de guichê com a cruz de acolhimento -->
+  <defs>
+    <linearGradient id="bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2EC4B0"/>
+      <stop offset="1" stop-color="#0E7268"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="22" y1="9" x2="42" y2="13" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FCD34D"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cartão -->
+  <rect x="6" y="4" width="52" height="56" rx="12" fill="url(#bg)"/>
+  <!-- Brilho de vidro -->
+  <path d="M14 4 L34 4 L18 60 L6 60 L6 16 Q6 4 18 4 Z" fill="#FFFFFF" opacity="0.14"/>
+
+  <!-- Picotes laterais do ticket -->
+  <circle cx="6" cy="32" r="3.5" fill="#F0FAF8"/>
+  <circle cx="58" cy="32" r="3.5" fill="#F0FAF8"/>
+
+  <!-- Fita âmbar -->
+  <rect x="22" y="9" width="20" height="3.5" rx="1.75" fill="url(#amber)"/>
+
+  <!-- Cruz de acolhimento -->
+  <path d="M27 19 h10 a2.2 2.2 0 0 1 2.2 2.2 v5.6 h5.6 a2.2 2.2 0 0 1 2.2 2.2 v10 a2.2 2.2 0 0 1 -2.2 2.2 h-5.6 v5.6 a2.2 2.2 0 0 1 -2.2 2.2 h-10 a2.2 2.2 0 0 1 -2.2 -2.2 v-5.6 h-5.6 a2.2 2.2 0 0 1 -2.2 -2.2 v-10 a2.2 2.2 0 0 1 2.2 -2.2 h5.6 v-5.6 a2.2 2.2 0 0 1 2.2 -2.2 z" fill="#F7FCFB"/>
+</svg>
