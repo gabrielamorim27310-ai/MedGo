@@ -16,7 +16,8 @@ const PORT = process.env.PORT || 3001
 // Middlewares
 app.use(helmet())
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  // Lista separada por vírgula (ex.: localhost + domínio da Vercel)
+  origin: (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',').map((o) => o.trim()),
   credentials: true,
 }))
 app.use(morgan('dev'))
