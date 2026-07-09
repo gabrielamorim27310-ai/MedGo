@@ -14,7 +14,7 @@ services:
     dockerfilePath: ./apps/api-gateway/Dockerfile
     dockerContext: .
     plan: free
-    region: oregon
+    region: virginia
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -49,7 +49,7 @@ services:
     dockerfilePath: ./apps/queue-service/Dockerfile
     dockerContext: .
     plan: free
-    region: oregon
+    region: virginia
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
