@@ -1,0 +1,27 @@
+# Nunca copiar node_modules do host (symlinks do pnpm/Windows quebram no
+# container) — o pnpm reinstala dentro do build.
+**/node_modules
+
+# Builds e artefatos
+**/dist
+**/.next
+**/.next-prod
+**/build
+**/out
+**/*.tsbuildinfo
+
+# Ambiente e segredos
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Git e ferramentas
+.git
+.gitignore
+.turbo
+.claude
+**/coverage
+
+# Logs e temporários
+**/*.log
+**/.DS_Store

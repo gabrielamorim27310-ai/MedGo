@@ -1,0 +1,62 @@
+# Blueprint do Render — backend da Acolhe (plano gratuito)
+#
+# Banco e cache ficam em serviços externos gratuitos e permanentes:
+#   - PostgreSQL: Neon   (https://neon.tech)
+#   - Redis:      Upstash (https://upstash.com)
+#
+# As variáveis marcadas com "sync: false" NÃO ficam no repositório —
+# você as preenche no painel do Render após criar o blueprint.
+services:
+  # ── API Gateway (REST + JWT + orquestração) ─────────────────────────
+  - type: web
+    name: acolhe-api-gateway
+    runtime: docker
+    dockerfilePath: ./apps/api-gateway/Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL          # Neon (connection string com ?sslmode=require)
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      - key: CORS_ORIGIN
+        value: https://acolhe-med.vercel.app
+      - key: FRONTEND_URL
+        value: https://acolhe-med.vercel.app
+      - key: GOOGLE_CLIENT_ID      # os mesmos IDs do frontend (lista por vírgula)
+        sync: false
+      - key: QUEUE_SERVICE_URL     # https://acolhe-queue-service.onrender.com
+        sync: false
+      - key: RESEND_API_KEY        # opcional; vazio = verificação em modo log
+        sync: false
+      - key: EMAIL_FROM
+        value: Acolhe <onboarding@resend.dev>
+
+  # ── Queue Service (fila em tempo real, Socket.IO, Redis) ────────────
+  - type: web
+    name: acolhe-queue-service
+    runtime: docker
+    dockerfilePath: ./apps/queue-service/Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL          # o MESMO Neon do gateway
+        sync: false
+      - key: REDIS_URL             # Upstash (rediss://... com TLS)
+        sync: false
+      - key: CORS_ORIGIN
+        value: https://acolhe-med.vercel.app
